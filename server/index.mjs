@@ -9,6 +9,7 @@ import {
   billingConfigured,
   verifyIpnSignature,
   confirmPayment,
+  paymentShortfall,
   createCheckout,
 } from "./billing.mjs";
 
@@ -384,13 +385,17 @@ async function handleApi(req, res, url) {
     try {
       // Confirm the deposit itself, never the invoice id: that is not a payment.
       const remote = await confirmPayment(String(body.payment_id ?? ""));
-      const paid = Number(remote.actually_paid ?? 0);
+      const short = paymentShortfall(remote);
       // Underpayment must never upgrade the account.
-      if (remote.payment_status !== "finished" || paid + 1e-8 < row.amount_usd) {
+      if (short) {
         auth.log("billing.webhook.underpaid", {
           userId: row.user_id,
-          detail: `paid=${paid} expected=${row.amount_usd}`,
+          detail: `status=${remote.payment_status} pay_amount=${remote.pay_amount} actually_paid=${remote.actually_paid} (${short})`,
         });
+        console.error(
+          `[billing] refusing upgrade: status=${remote.payment_status} ` +
+            `pay_amount=${remote.pay_amount} actually_paid=${remote.actually_paid} (${short})`
+        );
         return;
       }
       auth.applyPayment(row.id, { crypto: remote.pay_currency, status, raw: remote });

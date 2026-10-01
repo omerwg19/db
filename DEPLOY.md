@@ -97,6 +97,12 @@ How it behaves:
 - The webhook verifies NOWPayments' HMAC signature from the `x-nowpayments-sig`
   header, then re-reads the payment from their API before upgrading. A callback
   that cannot be confirmed leaves the account on Free.
+- Underpayment is judged by comparing `actually_paid` with `pay_amount` — both
+  in the same coin. Comparing a crypto amount against the USD price would read
+  a full $10 paid as 0.00031 BTC as "short of $10" and refuse every payment.
+  Where those figures are absent the provider's own `finished` status decides.
+- A refused upgrade logs `billing.webhook.underpaid` with both figures, and the
+  server prints the same line to stdout so `Manage → Application logs` shows it.
 - An invoice callback reports the underlying deposit's `payment_id` while our
   row is keyed on the invoice id, so the handler matches on either.
 - `provider_ref` is unique, so a redelivered webhook cannot grant a second

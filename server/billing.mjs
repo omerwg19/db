@@ -82,6 +82,26 @@ export async function confirmPayment(paymentId) {
 // their own coin. /v1/payment always fixes one currency and one deposit
 // address. CRYPTO_PAY_CURRENCY pins the currency instead, which is also what
 // the /payment fallback below needs.
+// Both figures are crypto, so this comparison is meaningful; comparing
+// actually_paid against the USD price is not, since 0.0003 BTC against $10 is
+// "underpaid" forever. Falls back to the provider's own status when either
+// number is absent or zero, which is common -- their documented sample carries
+// actually_paid_at_fiat: 0.
+export const PAYMENT_SHORTFALL_TOLERANCE = 0.01;
+
+export function paymentShortfall(remote) {
+  const status = String(remote?.payment_status ?? "");
+  if (status !== "finished") return "not finished";
+  const expected = Number(remote?.pay_amount ?? 0);
+  const received = Number(remote?.actually_paid ?? 0);
+  if (!(expected > 0) || !(received > 0)) return null;
+  // 1% covers provider rounding on the required amount.
+  if (received < expected * (1 - PAYMENT_SHORTFALL_TOLERANCE)) {
+    return `short by ${expected - received} ${String(remote?.pay_currency ?? "")}`;
+  }
+  return null;
+}
+
 export async function createCheckout({ user, plan, origin, ip }) {
   const spec = CHECKOUT_PLANS[plan];
   if (!spec) throw new Error("Unknown plan");
