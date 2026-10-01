@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Supported lookups — Veriscope</title>
+<meta name="description" content="Search email, phone, username, IP, domain, Discord ID, full name and stealer logs from one query.">
+<meta name="theme-color" content="#fbfaf8">
+<link rel="icon" href="/assets/favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="/css/site.css">
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+
+<header class="nav">
+  <div class="wrap nav-in">
+    <a class="brand" href="/"><img src="/assets/logo.svg" width="28" height="28" alt=""> Veriscope</a>
+    <nav class="nav-links" id="navlinks" aria-label="Primary">
+      <a href="/lookups.html" aria-current="page">Lookups</a>
+      <a href="/sources.html">Sources</a>
+      <a href="/pricing.html">Pricing</a>
+      <a href="/faq.html">FAQ</a>
+    </nav>
+    <div class="nav-right">
+      <span id="nav-user" class="nav-right" hidden></span>
+      <button class="burger" id="burger" aria-label="Toggle menu" aria-expanded="false" aria-controls="navlinks"><i></i></button>
+    </div>
+  </div>
+</header>
+
+<main id="main">
+  <section class="section">
+    <div class="wrap">
+      <div class="sec-head rv">
+        <p class="eyebrow">Supported lookups</p>
+        <h2>Every identifier we can resolve</h2>
+        <p class="lead">You do not choose a lookup type. Paste the identifier and Veriscope classifies it, then queries every source that has indexed it.</p>
+      </div>
+
+      <div class="lookup-grid rv">
+        <article class="lcard">
+          <img src="/img/lookup-email.png" width="48" height="48" alt="" loading="lazy">
+          <h3>Email address</h3>
+          <p>Breach appearances across corpora and stealer logs, linked accounts, and public profile footprint for the mailbox itself.</p>
+        </article>
+        <article class="lcard">
+          <img src="/img/lookup-phone.png" width="48" height="48" alt="" loading="lazy">
+          <h3>Phone number</h3>
+          <p>Country and carrier resolution, line type, and accounts tied to the number across data brokers and app signups.</p>
+        </article>
+        <article class="lcard">
+          <img src="/img/lookup-username.png" width="48" height="48" alt="" loading="lazy">
+          <h3>Username</h3>
+          <p>Profile matches across social networks, forums, developer platforms, marketplaces and gaming services.</p>
+        </article>
+        <article class="lcard">
+          <img src="/img/lookup-ip.png" width="48" height="48" alt="" loading="lazy">
+          <h3>IP address</h3>
+          <p>Geolocation, hosting provider, ASN and network owner, plus reputation and abuse-report signals.</p>
+        </article>
+        <article class="lcard">
+          <img src="/img/lookup-domain.png" width="48" height="48" alt="" loading="lazy">
+          <h3>Domain</h3>
+          <p>WHOIS and registration data, DNS history, certificate transparency entries, and infrastructure change records.</p>
+        </article>
+        <article class="lcard">
+          <img src="/img/lookup-discord.png" width="48" height="48" alt="" loading="lazy">
+          <h3>Discord ID</h3>
+          <p>Resolve an identifier to associated servers, roles, and publicly visible activity.</p>
+        </article>
+        <article class="lcard">
+          <img src="/img/lookup-name.png" width="48" height="48" alt="" loading="lazy">
+          <h3>Full name</h3>
+          <p>Multi-criteria search across name, location and employer to disambiguate between people with shared names.</p>
+        </article>
+        <article class="lcard">
+          <img src="/img/lookup-stealer.png" width="48" height="48" alt="" loading="lazy">
+          <h3>Stealer logs</h3>
+          <p>Credentials harvested by infostealer malware, grouped by infected machine so repeat targets and stale entries are visible.</p>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <section class="section section-alt">
+    <div class="wrap">
+      <div class="cta-in rv">
+        <h2>Run one against your own accounts</h2>
+        <p class="lead">The fastest way to judge the output is to point it at an address you already own.</p>
+        <div class="cta-btns">
+          <a class="btn btn-primary btn-lg" href="/register.html">Create a free account</a>
+          <a class="btn btn-ghost btn-lg" href="/pricing.html">See pricing</a>
+        </div>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer>
+  <div class="wrap">
+    <div class="foot-top">
+      <div class="foot-brand">
+        <a class="brand" href="/"><img src="/assets/logo.svg" width="28" height="28" alt=""> Veriscope</a>
+        <p>Correlated intelligence search across breach, stealer and public sources.</p>
+      </div>
+      <div class="foot-nav">
+        <div class="foot-col">
+          <h4>Product</h4>
+          <ul>
+            <li><a href="/lookups.html">Lookups</a></li>
+            <li><a href="/sources.html">Sources</a></li>
+            <li><a href="/pricing.html">Pricing</a></li>
+            <li><a href="/dashboard.html">Dashboard</a></li>
+          </ul>
+        </div>
+        <div class="foot-col">
+          <h4>Company</h4>
+          <ul>
+            <li><a href="/about.html">About</a></li>
+            <li><a href="/faq.html">FAQ</a></li>
+            <li><a href="/contact.html">Contact</a></li>
+          </ul>
+        </div>
+        <div class="foot-col">
+          <h4>Legal</h4>
+          <ul>
+            <li><a href="/legal.html#privacy">Privacy</a></li>
+            <li><a href="/legal.html#terms">Terms</a></li>
+            <li><a href="/legal.html#acceptable-use">Acceptable use</a></li>
+            <li><a href="/legal.html#gdpr">GDPR</a></li>
+          </ul>
+        </div>
+      </div>
+    </div>
+    <div class="foot-bot">
+      <span>&copy; 2026 Veriscope</span>
+      <span>All product names and marks are property of their respective owners.</span>
+    </div>
+  </div>
+</footer>
+
+<script src="/js/site.js"></script>
+</body>
+</html>

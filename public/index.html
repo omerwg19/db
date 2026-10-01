@@ -1,0 +1,335 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Veriscope — Correlated breach intelligence across 70+ sources</title>
+<meta name="description" content="Veriscope queries breach corpora, infostealer logs, social platforms and public registries in parallel, then correlates the hits into one picture of a subject's exposure.">
+<meta name="theme-color" content="#fbfaf8">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Veriscope">
+<meta property="og:title" content="Correlated breach intelligence across 70+ sources">
+<meta property="og:description" content="Email, phone, username, IP, domain and Discord ID lookups in one query.">
+<meta property="og:image" content="/img/og-cover.png">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="icon" href="/assets/favicon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="/img/apple-touch-icon.png">
+<link rel="stylesheet" href="/css/site.css">
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+
+<header class="nav">
+  <div class="wrap nav-in">
+    <a class="brand" href="/"><img src="/assets/logo.svg" width="28" height="28" alt=""> Veriscope</a>
+    <nav class="nav-links" id="navlinks" aria-label="Primary">
+      <a href="/lookups.html">Lookups</a>
+      <a href="/sources.html">Sources</a>
+      <a href="/pricing.html">Pricing</a>
+      <a href="/faq.html">FAQ</a>
+    </nav>
+    <div class="nav-right">
+      <span id="nav-user" class="nav-right" hidden></span>
+      <button class="burger" id="burger" aria-label="Toggle menu" aria-expanded="false" aria-controls="navlinks"><i></i></button>
+    </div>
+  </div>
+</header>
+
+<main id="main">
+
+<section class="hero">
+  <div class="wrap">
+    <div class="hero-grid">
+      <div>
+        <h1>Find the breach before <em>someone else does.</em></h1>
+        <p class="lead">Veriscope searches breach corpora, infostealer logs, social platforms and public registries at once, then correlates the hits into a single picture of a subject's exposure.</p>
+        <div class="hero-cta">
+          <a class="btn btn-primary btn-lg" href="/register.html">Create a free account</a>
+          <a class="btn btn-ghost btn-lg" href="/sources.html">See the sources</a>
+        </div>
+        <div class="pill-row">
+          <span class="pill"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg> No query history retained</span>
+          <span class="pill"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg> TLS in transit, query text never stored</span>
+          <span class="pill"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg> Quota resets daily</span>
+        </div>
+      </div>
+      <figure class="hero-art">
+        <img src="/img/hero-convergence.png" width="1120" height="700" alt="Diagram of ten query sources converging on a single correlated result" fetchpriority="high">
+        <figcaption>Sources queried in parallel, results normalised and deduplicated by field</figcaption>
+      </figure>
+    </div>
+
+    <div class="searchcard rv">
+      <div class="searchcard-head">
+        <h3>Try a lookup</h3>
+        <span class="demo-tag">
+          <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg>
+          Demo data in this build
+        </span>
+      </div>
+      <div class="search-row">
+        <svg class="mag" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m21 21-4.34-4.34"/><circle cx="11" cy="11" r="8"/></svg>
+        <input id="hero-input" type="text" placeholder="Email, phone, username, IP, domain or Discord ID" aria-label="Search identifier" autocomplete="off" spellcheck="false">
+        <a class="btn btn-primary" href="/register.html">Search</a>
+      </div>
+      <div class="search-meta">
+        <span class="detected" id="hero-detected"></span>
+        <span>Type is detected automatically. Nothing is stored.</span>
+      </div>
+      <div class="samples" id="hero-samples">
+        <button type="button">ada.lovelace@example.com</button>
+        <button type="button">+14155550142</button>
+        <button type="button">a_lovelace</button>
+        <button type="button">192.0.2.146</button>
+        <button type="button">example.com</button>
+        <button type="button">382891234567890123</button>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="stats">
+  <div class="wrap stats-in">
+    <div class="stat"><b>70+</b><span>Sources queried</span></div>
+    <div class="stat"><b>&lt;4s</b><span>Median response</span></div>
+    <div class="stat"><b>190</b><span>Countries covered</span></div>
+    <div class="stat"><b>99.9%</b><span>Platform uptime</span></div>
+  </div>
+</section>
+
+<section class="section">
+  <div class="wrap">
+    <div class="sec-head rv">
+      <p class="eyebrow">Supported lookups</p>
+      <h2>One query, every identifier</h2>
+      <p class="lead">Paste any identifier and Veriscope works out what it is, then fans the request out across every source that has ever indexed it.</p>
+    </div>
+    <div class="lookup-grid rv">
+      <article class="lcard">
+        <img src="/img/lookup-email.png" width="48" height="48" alt="" loading="lazy">
+        <h3>Email address</h3>
+        <p>Breach appearances, linked accounts and public footprint for a specific mailbox.</p>
+        <span class="go">Try a lookup <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span>
+      </article>
+      <article class="lcard">
+        <img src="/img/lookup-phone.png" width="48" height="48" alt="" loading="lazy">
+        <h3>Phone number</h3>
+        <p>Carrier and country resolution, plus accounts tied to the number across data brokers.</p>
+        <span class="go">Try a lookup <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span>
+      </article>
+      <article class="lcard">
+        <img src="/img/lookup-username.png" width="48" height="48" alt="" loading="lazy">
+        <h3>Username</h3>
+        <p>Profile matches across social networks, forums, marketplaces and gaming platforms.</p>
+        <span class="go">Try a lookup <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span>
+      </article>
+      <article class="lcard">
+        <img src="/img/lookup-ip.png" width="48" height="48" alt="" loading="lazy">
+        <h3>IP address</h3>
+        <p>Geolocation, hosting provider, ASN and reputation signals for an address.</p>
+        <span class="go">Try a lookup <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span>
+      </article>
+      <article class="lcard">
+        <img src="/img/lookup-domain.png" width="48" height="48" alt="" loading="lazy">
+        <h3>Domain</h3>
+        <p>Registration records, DNS history, certificate transparency and infrastructure changes.</p>
+        <span class="go">Try a lookup <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span>
+      </article>
+      <article class="lcard">
+        <img src="/img/lookup-discord.png" width="48" height="48" alt="" loading="lazy">
+        <h3>Discord ID</h3>
+        <p>Resolve an identifier to associated servers, roles and public activity.</p>
+        <span class="go">Try a lookup <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span>
+      </article>
+      <article class="lcard">
+        <img src="/img/lookup-name.png" width="48" height="48" alt="" loading="lazy">
+        <h3>Full name</h3>
+        <p>Multi-criteria search across name, location and employer to disambiguate a subject.</p>
+        <span class="go">Try a lookup <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span>
+      </article>
+      <article class="lcard">
+        <img src="/img/lookup-stealer.png" width="48" height="48" alt="" loading="lazy">
+        <h3>Stealer logs</h3>
+        <p>Credentials harvested by infostealer malware, grouped by machine and by target site.</p>
+        <span class="go">Try a lookup <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span>
+      </article>
+    </div>
+  </div>
+</section>
+
+<section class="section section-alt">
+  <div class="wrap">
+    <div class="sec-head rv">
+      <p class="eyebrow">How it works</p>
+      <h2>Three steps, one answer</h2>
+    </div>
+    <div class="steps-grid rv">
+      <article class="step">
+        <div class="step-art"><img src="/img/step-1.png" width="320" height="200" alt="A search field with a submit button" loading="lazy"></div>
+        <div class="step-n">01</div>
+        <h3>Submit an identifier</h3>
+        <p>Paste an email, phone number, username, IP or domain. No query syntax to learn and no setup call in the way.</p>
+      </article>
+      <article class="step">
+        <div class="step-art"><img src="/img/step-2.png" width="320" height="200" alt="Multiple source nodes feeding a single pipeline" loading="lazy"></div>
+        <div class="step-n">02</div>
+        <h3>Sources are queried live</h3>
+        <p>Every applicable source is polled in parallel and the responses are normalised into a common schema before ranking.</p>
+      </article>
+      <article class="step">
+        <div class="step-art"><img src="/img/step-3.png" width="320" height="200" alt="A results panel with ranked rows" loading="lazy"></div>
+        <div class="step-n">03</div>
+        <h3>Review the exposure</h3>
+        <p>Hits are grouped by source, deduplicated by field and shown in a dashboard you can filter and export.</p>
+      </article>
+    </div>
+  </div>
+</section>
+
+<section class="section">
+  <div class="wrap">
+    <div class="sec-head rv">
+      <p class="eyebrow">Source categories</p>
+      <h2>Where the data comes from</h2>
+      <p class="lead">Results are aggregated from four broad categories. Each result links back to its originating record so you can judge provenance yourself.</p>
+    </div>
+    <div class="source-grid rv">
+      <article class="source">
+        <div class="source-top"><h3>Breach corpora</h3><span class="count">28 sources</span></div>
+        <p>Curated datasets from known credential-stuffing incidents and public leak disclosures, matched on email, username and password hash.</p>
+      </article>
+      <article class="source">
+        <div class="source-top"><h3>Infostealer logs</h3><span class="count">11 sources</span></div>
+        <p>Output from commodity stealer malware, indexed by infected machine so repeated targets can be spotted and expired entries filtered.</p>
+      </article>
+      <article class="source">
+        <div class="source-top"><h3>Social and web</h3><span class="count">24 sources</span></div>
+        <p>Public profiles, handles and posts across social networks, developer platforms, marketplaces and gaming services.</p>
+      </article>
+      <article class="source">
+        <div class="source-top"><h3>Public registries</h3><span class="count">7 sources</span></div>
+        <p>WHOIS and DNS records, certificate transparency logs, IP geolocation and ASN data, and open corporate registries.</p>
+      </article>
+    </div>
+    <div class="sourcedemo rv">
+      <div class="logline">
+        <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="#3f9e6a" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
+        <span>Last poll completed <b>70/70 sources</b> in 3.1s — median across the last hour</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="section section-alt">
+  <div class="wrap">
+    <div class="sec-head rv">
+      <p class="eyebrow">Pricing</p>
+      <h2>Pay once, keep the access</h2>
+      <p class="lead">No monthly billing. Pick a tier once and the quota resets daily for as long as you need it.</p>
+    </div>
+    <div class="tiers rv">
+      <article class="tier">
+        <h3>Free</h3>
+        <p class="for">For occasional checks</p>
+        <div class="price"><b>€0</b></div>
+        <p class="price-sub">forever, no card required</p>
+        <a class="btn btn-ghost btn-block" href="/register.html">Start searching</a>
+        <ul>
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg><span><b>10 queries per day</b>, reset daily</span></li>
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg><span>Email, username and domain lookups</span></li>
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg><span>Dashboard with source links</span></li>
+        </ul>
+      </article>
+      <article class="tier hot">
+        <span class="tier-tag">MOST POPULAR</span>
+        <h3>Pro</h3>
+        <p class="for">For analysts and responders</p>
+        <div class="price"><b>€24.99</b><span>once</span></div>
+        <p class="price-sub">lifetime access, all sources</p>
+        <a class="btn btn-primary btn-block" href="/register.html?plan=pro">Get access</a>
+        <ul>
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg><span><b>500 queries per day</b></span></li>
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg><span>All 70+ sources including stealer logs</span></li>
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg><span>Phone, IP and Discord ID lookups</span></li>
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg><span>Multi-criteria search and saved cases</span></li>
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg><span>Export as CSV or JSON</span></li>
+        </ul>
+      </article>
+      <article class="tier">
+        <h3>Enterprise</h3>
+        <p class="for">For teams and institutions</p>
+        <div class="price"><b>€199</b><span>once</span></div>
+        <p class="price-sub">lifetime access, volume quota</p>
+        <a class="btn btn-ghost btn-block" href="/contact.html">Talk to us</a>
+        <ul>
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg><span><b>15,000 queries per day</b></span></li>
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg><span>Unlimited seats on your workspace</span></li>
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg><span>API access and bulk endpoints</span></li>
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg><span>Priority routing and named support</span></li>
+        </ul>
+      </article>
+    </div>
+  </div>
+</section>
+
+<section class="section">
+  <div class="cta-in rv">
+    <h2>Start with ten free queries</h2>
+    <p class="lead">No card, no setup call. Create an account and see what turns up before you decide on anything.</p>
+    <div class="cta-btns">
+      <a class="btn btn-primary btn-lg" href="/register.html">Create free account</a>
+      <a class="btn btn-ghost btn-lg" href="/pricing.html">Compare tiers</a>
+    </div>
+  </div>
+</section>
+
+</main>
+
+<footer>
+  <div class="wrap">
+    <div class="foot-top">
+      <div class="foot-brand">
+        <a class="brand" href="/"><img src="/assets/logo.svg" width="28" height="28" alt=""> Veriscope</a>
+        <p>Correlated intelligence search across breach, stealer and public sources.</p>
+      </div>
+      <div class="foot-nav">
+        <div class="foot-col">
+          <h4>Product</h4>
+          <ul>
+            <li><a href="/lookups.html">Lookups</a></li>
+            <li><a href="/sources.html">Sources</a></li>
+            <li><a href="/pricing.html">Pricing</a></li>
+            <li><a href="/dashboard.html">Dashboard</a></li>
+          </ul>
+        </div>
+        <div class="foot-col">
+          <h4>Company</h4>
+          <ul>
+            <li><a href="/about.html">About</a></li>
+            <li><a href="/faq.html">FAQ</a></li>
+            <li><a href="/contact.html">Contact</a></li>
+          </ul>
+        </div>
+        <div class="foot-col">
+          <h4>Legal</h4>
+          <ul>
+            <li><a href="/legal.html#privacy">Privacy</a></li>
+            <li><a href="/legal.html#terms">Terms</a></li>
+            <li><a href="/legal.html#acceptable-use">Acceptable use</a></li>
+            <li><a href="/legal.html#gdpr">GDPR</a></li>
+          </ul>
+        </div>
+      </div>
+    </div>
+    <p class="legal-note"><b>Responsible use.</b> Veriscope surfaces material that is already publicly available, and having a record indexed somewhere does not make it yours to use. Only query subjects you own or have documented authorisation to investigate. We do not support doxxing, stalking, harassment or identity theft, and we terminate access for misuse without refund.</p>
+    <div class="foot-bot">
+      <span>&copy; 2026 Veriscope</span>
+      <span>All product names and marks are property of their respective owners.</span>
+    </div>
+  </div>
+</footer>
+
+<script src="/js/site.js"></script>
+<script src="/js/home.js"></script>
+</body>
+</html>

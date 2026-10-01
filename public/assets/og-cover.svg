@@ -1,0 +1,49 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 630" width="1200" height="630" role="img" aria-label="Veriscope">
+  
+  <defs>
+    <linearGradient id="acc" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#e8622c"/>
+      <stop offset="100%" stop-color="#c24a19"/>
+    </linearGradient>
+    <linearGradient id="accSoft" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#e8622c" stop-opacity="0.16"/>
+      <stop offset="100%" stop-color="#f2a93b" stop-opacity="0.10"/>
+    </linearGradient>
+    <linearGradient id="fadeDown" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#ffffff"/>
+      <stop offset="100%" stop-color="#fbfaf8"/>
+    </linearGradient>
+    <linearGradient id="fadeUp" x1="0" y1="1" x2="0" y2="0">
+      <stop offset="0%" stop-color="#ffffff"/>
+      <stop offset="100%" stop-color="#fbfaf8"/>
+    </linearGradient>
+    <radialGradient id="glowA" cx="0.5" cy="0.5" r="0.5">
+      <stop offset="0%" stop-color="#e8622c" stop-opacity="0.30"/>
+      <stop offset="100%" stop-color="#e8622c" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="glowB" cx="0.5" cy="0.5" r="0.5">
+      <stop offset="0%" stop-color="#3b7dd8" stop-opacity="0.22"/>
+      <stop offset="100%" stop-color="#3b7dd8" stop-opacity="0"/>
+    </radialGradient>
+    <pattern id="grid" width="48" height="48" patternUnits="userSpaceOnUse">
+      <path d="M48 0H0V48" fill="none" stroke="#141312" stroke-opacity="0.055" stroke-width="1"/>
+    </pattern>
+  </defs>
+  <rect width="1200" height="630" fill="#fbfaf8"/>
+  <ellipse cx="980" cy="90" rx="380" ry="300" fill="url(#glowA)"/>
+  <ellipse cx="140" cy="600" rx="330" ry="250" fill="url(#glowB)"/>
+  <rect width="1200" height="630" fill="url(#grid)"/>
+  <g transform="translate(88 96)">
+    <rect width="76" height="76" rx="20" fill="url(#acc)"/>
+    <path d="M38 18 L58 26 V41 C58 55 48.8 65.6 38 68.4 C27.2 65.6 18 55 18 41 V26 Z"
+          fill="none" stroke="#fff" stroke-width="4.4" stroke-linejoin="round"/>
+    <path d="M30 43 L35.8 48.8 L46 36.2" fill="none" stroke="#fff" stroke-width="4.6" stroke-linecap="round" stroke-linejoin="round"/>
+  </g>
+  <text x="88" y="288" font-family="Segoe UI, Arial, sans-serif" font-size="76" font-weight="700" fill="#141312" letter-spacing="-2.4">Correlated breach intelligence</text>
+  <text x="88" y="378" font-family="Segoe UI, Arial, sans-serif" font-size="76" font-weight="700" fill="url(#acc)" letter-spacing="-2.4">across 70+ sources</text>
+  <text x="88" y="452" font-family="Segoe UI, Arial, sans-serif" font-size="30" font-weight="400" fill="#6d6a66">Email, phone, username, IP, domain and Discord ID lookups.</text>
+  <g transform="translate(88 500)">
+    <rect width="248" height="52" rx="26" fill="#141312"/>
+    <text x="124" y="34" text-anchor="middle" font-family="Segoe UI, Arial, sans-serif" font-size="21" font-weight="600" fill="#fff">veriscope.app</text>
+  </g>
+</svg>

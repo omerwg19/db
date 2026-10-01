@@ -1,0 +1,14 @@
+# Normalize to LF in the repo. Docker and systemd both misbehave with CRLF.
+* text=auto eol=lf
+
+# Images are binary.
+*.png binary
+*.jpg binary
+*.ico binary
+*.woff binary
+*.woff2 binary
+
+# Keep shell scripts executable-friendly in the container.
+*.sh text eol=lf
+Dockerfile text eol=lf
+*.service text eol=lf

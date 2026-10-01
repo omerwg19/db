@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 96 96" width="96" height="96" role="img" aria-label="kofi">
+  <defs><linearGradient id="a4" x1="0" y1="0" x2="1" y2="1">
+    <stop offset="0%" stop-color="#0ea5a5"/><stop offset="100%" stop-color="#68cfcf"/>
+  </linearGradient></defs>
+  <circle cx="48" cy="48" r="48" fill="url(#a4)"/>
+  <circle cx="48" cy="38" r="14" fill="#fff" fill-opacity="0.92"/>
+  <path d="M20 84c0-15.5 12.5-26 28-26s28 10.5 28 26Z" fill="#fff" fill-opacity="0.92"/>
+</svg>

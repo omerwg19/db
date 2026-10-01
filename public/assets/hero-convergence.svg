@@ -1,0 +1,83 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1120 700" width="1120" height="700" role="img" aria-label="Abstract diagram of query sources converging on correlated results">
+  
+  <defs>
+    <linearGradient id="acc" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#e8622c"/>
+      <stop offset="100%" stop-color="#c24a19"/>
+    </linearGradient>
+    <linearGradient id="accSoft" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#e8622c" stop-opacity="0.16"/>
+      <stop offset="100%" stop-color="#f2a93b" stop-opacity="0.10"/>
+    </linearGradient>
+    <linearGradient id="fadeDown" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#ffffff"/>
+      <stop offset="100%" stop-color="#fbfaf8"/>
+    </linearGradient>
+    <linearGradient id="fadeUp" x1="0" y1="1" x2="0" y2="0">
+      <stop offset="0%" stop-color="#ffffff"/>
+      <stop offset="100%" stop-color="#fbfaf8"/>
+    </linearGradient>
+    <radialGradient id="glowA" cx="0.5" cy="0.5" r="0.5">
+      <stop offset="0%" stop-color="#e8622c" stop-opacity="0.30"/>
+      <stop offset="100%" stop-color="#e8622c" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="glowB" cx="0.5" cy="0.5" r="0.5">
+      <stop offset="0%" stop-color="#3b7dd8" stop-opacity="0.22"/>
+      <stop offset="100%" stop-color="#3b7dd8" stop-opacity="0"/>
+    </radialGradient>
+    <pattern id="grid" width="48" height="48" patternUnits="userSpaceOnUse">
+      <path d="M48 0H0V48" fill="none" stroke="#141312" stroke-opacity="0.055" stroke-width="1"/>
+    </pattern>
+  </defs>
+  <rect width="1120" height="700" fill="#fbfaf8"/>
+  <ellipse cx="300" cy="140" rx="330" ry="240" fill="url(#glowA)"/>
+  <ellipse cx="880" cy="600" rx="300" ry="230" fill="url(#glowB)"/>
+  <rect width="1120" height="700" fill="url(#grid)"/>
+
+  <g stroke="#141312" stroke-opacity="0.13" fill="none" stroke-width="1.4">
+    <path d="M150 150 C330 150 360 330 545 350"/>
+    <path d="M150 250 C320 250 350 340 545 352"/>
+    <path d="M150 350 C330 352 380 352 545 352"/>
+    <path d="M150 450 C320 452 360 372 545 354"/>
+    <path d="M150 550 C330 552 370 386 545 354"/>
+    <path d="M970 150 C790 152 760 330 575 350"/>
+    <path d="M970 250 C800 252 770 340 575 348"/>
+    <path d="M970 350 C790 350 750 352 575 352"/>
+    <path d="M970 450 C800 452 760 372 575 354"/>
+    <path d="M970 550 C790 552 770 386 575 354"/>
+  </g>
+
+  <g>
+    <circle cx="150" cy="150" r="7.5" fill="#fff" stroke="#141312" stroke-opacity="0.22" stroke-width="1.6"/>
+    <circle cx="150" cy="250" r="7.5" fill="#fff" stroke="#141312" stroke-opacity="0.22" stroke-width="1.6"/>
+    <circle cx="150" cy="350" r="7.5" fill="#fff" stroke="#141312" stroke-opacity="0.22" stroke-width="1.6"/>
+    <circle cx="150" cy="450" r="7.5" fill="#fff" stroke="#141312" stroke-opacity="0.22" stroke-width="1.6"/>
+    <circle cx="150" cy="550" r="7.5" fill="#fff" stroke="#141312" stroke-opacity="0.22" stroke-width="1.6"/>
+    <circle cx="970" cy="150" r="7.5" fill="#fff" stroke="#141312" stroke-opacity="0.22" stroke-width="1.6"/>
+    <circle cx="970" cy="250" r="7.5" fill="#fff" stroke="#141312" stroke-opacity="0.22" stroke-width="1.6"/>
+    <circle cx="970" cy="350" r="7.5" fill="#fff" stroke="#141312" stroke-opacity="0.22" stroke-width="1.6"/>
+    <circle cx="970" cy="450" r="7.5" fill="#fff" stroke="#141312" stroke-opacity="0.22" stroke-width="1.6"/>
+    <circle cx="970" cy="550" r="7.5" fill="#fff" stroke="#141312" stroke-opacity="0.22" stroke-width="1.6"/>
+  </g>
+
+  <g>
+    <circle cx="560" cy="352" r="132" fill="url(#accSoft)"/>
+    <circle cx="560" cy="352" r="96" fill="#fff" stroke="#e8622c" stroke-opacity="0.42" stroke-width="2"/>
+    <circle cx="560" cy="352" r="60" fill="url(#acc)"/>
+    <path d="M560 322 L582 333 V352 C582 369 571.6 381.8 560 385.6 C548.4 381.8 538 369 538 352 V333 Z"
+          fill="none" stroke="#fff" stroke-width="3.2" stroke-linejoin="round"/>
+    <path d="M551 353 L557.6 359.6 L569.6 346.2" fill="none" stroke="#fff" stroke-width="3.4"
+          stroke-linecap="round" stroke-linejoin="round"/>
+  </g>
+
+  <g opacity="0.85">
+    <circle cx="430" cy="232" r="4.5" fill="#e8622c" fill-opacity="0.5"/>
+    <circle cx="700" cy="240" r="4.5" fill="#e8622c" fill-opacity="0.5"/>
+    <circle cx="420" cy="470" r="4.5" fill="#e8622c" fill-opacity="0.5"/>
+    <circle cx="706" cy="462" r="4.5" fill="#e8622c" fill-opacity="0.5"/>
+    <circle cx="560" cy="190" r="4.5" fill="#e8622c" fill-opacity="0.5"/>
+    <circle cx="560" cy="516" r="4.5" fill="#e8622c" fill-opacity="0.5"/>
+    <circle cx="352" cy="352" r="4.5" fill="#e8622c" fill-opacity="0.5"/>
+    <circle cx="768" cy="352" r="4.5" fill="#e8622c" fill-opacity="0.5"/>
+  </g>
+</svg>

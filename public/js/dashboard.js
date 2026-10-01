@@ -1,0 +1,246 @@
+/* Dashboard: gated view, quota, search + history. */
+(function () {
+  "use strict";
+
+  var el = function (id) { return document.getElementById(id); };
+
+  var state = { user: null, csrf: null, used: 0, history: [] };
+
+  /* ----------------------------------------------------------- guard ---- */
+  fetch("/api/me", { credentials: "same-origin" })
+    .then(function (r) { return r.json(); })
+    .then(function (d) {
+      if (!d.user) {
+        location.replace("/login.html?next=" + encodeURIComponent(location.pathname + location.search));
+        return;
+      }
+      state.user = d.user;
+      state.csrf = d.csrf;
+      state.used = d.quotaUsed ?? 0;
+      window.VS.showSession({ user: d.user, csrf: d.csrf, quotaUsed: d.quotaUsed });
+      render();
+      renderHistory();
+      consumePending();
+    })
+    .catch(function () { location.replace("/login.html"); });
+
+  var historyClear = el("history-clear");
+  if (historyClear) {
+    historyClear.addEventListener("click", function () {
+      try { localStorage.removeItem(historyKey()); } catch (e) {}
+      renderHistory();
+    });
+  }
+
+  function render() {
+    var who = state.user.name || state.user.email.split("@")[0];
+    el("greet").textContent = "Welcome back, " + who;
+    el("plan-name").textContent = state.user.planLabel + " plan";
+    el("plan-name-2").textContent = state.user.planLabel;
+    el("quota-used").textContent = state.used;
+    el("quota-limit").textContent = state.user.dailyQuota;
+    el("member-since").textContent = (state.user.createdAt || "").slice(0, 10) || "—";
+    el("account-email").textContent = state.user.email;
+
+    var pct = Math.min(100, (state.used / state.user.dailyQuota) * 100);
+    el("quota-fill").style.width = pct + "%";
+  }
+
+  /* Runs the search handed over from the homepage exactly once, then drops
+     the query from the URL so refreshes do not burn quota again. */
+  function consumePending() {
+    var params = new URLSearchParams(location.search);
+    var pending = params.get("q");
+    if (!pending) return;
+    params.delete("q");
+    var clean = location.pathname + (params.toString() ? "?" + params : "");
+    history.replaceState(null, "", clean);
+    el("q").value = pending;
+    doSearch(pending);
+  }
+
+  /* -------------------------------------------------------- detection --- */
+  var input = el("q");
+  var out = el("detected");
+  var RULES = [
+    ["Email address", function (v) { return /^[^\s@]+@[^\s@]+\.[a-z]{2,}$/i.test(v); }],
+    ["Domain", function (v) { return /^(https?:\/\/)?([a-z0-9-]+\.)+[a-z]{2,}(\/.*)?$/i.test(v); }],
+    ["IP address", function (v) { return /^\d{1,3}(\.\d{1,3}){3}$/.test(v); }],
+    ["Discord ID", function (v) { return /^\d{17,20}$/.test(v); }],
+    ["Phone number", function (v) { return /^\+?[\d\s().-]{7,20}$/.test(v) && /\d/.test(v); }],
+    ["Username or name", function (v) { return /^[a-z0-9_.\- ]{2,40}$/i.test(v); }],
+  ];
+
+  function detect() {
+    var v = input.value.trim();
+    if (!v) { out.classList.remove("on"); return; }
+    for (var i = 0; i < RULES.length; i++) {
+      if (RULES[i][1](v)) {
+        out.innerHTML = "Detected: <code>" + RULES[i][0] + "</code>";
+        out.classList.add("on");
+        return;
+      }
+    }
+    out.classList.remove("on");
+  }
+  input.addEventListener("input", detect);
+
+  var samples = el("samples");
+  if (samples) {
+    samples.addEventListener("click", function (e) {
+      var b = e.target.closest("button");
+      if (!b) return;
+      input.value = b.textContent.trim();
+      detect();
+      input.focus();
+    });
+  }
+
+  /* ----------------------------------------------------------- search --- */
+  var form = el("search-form");
+  var banner = el("banner");
+  var results = el("results");
+
+  function notice(msg, kind) {
+    banner.className = "alert on alert-" + (kind || "info");
+    el("banner-text").textContent = msg;
+  }
+
+  function doSearch(value) {
+    value = (value || input.value).trim();
+    if (!value) { notice("Enter an identifier to search for.", "error"); return; }
+
+    results.innerHTML =
+      '<div class="empty"><p>Querying sources…</p></div>';
+
+    fetch("/api/search", {
+      method: "POST",
+      credentials: "same-origin",
+      headers: { "Content-Type": "application/json", "X-CSRF-Token": state.csrf },
+      body: JSON.stringify({ input: value }),
+    })
+      .then(function (r) {
+        return r.json().then(function (d) { return { ok: r.ok, data: d }; });
+      })
+      .then(function (res) {
+        if (!res.ok) {
+          results.innerHTML = "";
+          notice(res.data.error || "Search failed.", "error");
+          return;
+        }
+        state.used = res.data.quota.used;
+        render();
+        remember(value);
+        notice(
+          res.data.hits.length + " demo " + (res.data.hits.length === 1 ? "record" : "records") +
+          " across the source set. This build returns synthetic data.",
+          "info"
+        );
+        renderResults(res.data);
+      })
+      .catch(function () {
+        results.innerHTML = "";
+        notice("Network error during search.", "error");
+      });
+  }
+
+  /* Recent searches live only in this browser. Nothing about what you looked up
+     is sent to or kept on the server, which is what the privacy page promises. */
+  function historyKey() {
+    return "vs.history." + (state.user ? state.user.id : "anon");
+  }
+
+  function loadHistory() {
+    try {
+      var raw = JSON.parse(localStorage.getItem(historyKey()) || "[]");
+      return Array.isArray(raw) ? raw.filter(function (v) { return typeof v === "string"; }) : [];
+    } catch (e) {
+      return [];
+    }
+  }
+
+  function remember(value) {
+    var list = loadHistory().filter(function (v) { return v.toLowerCase() !== value.toLowerCase(); });
+    list.unshift(value);
+    try { localStorage.setItem(historyKey(), JSON.stringify(list.slice(0, 8))); } catch (e) {}
+    renderHistory();
+  }
+
+  function renderHistory() {
+    var wrap = el("history"), chips = el("history-chips");
+    if (!wrap || !chips) return;
+    var list = loadHistory();
+    if (!list.length) { wrap.hidden = true; return; }
+    wrap.hidden = false;
+    chips.innerHTML = "";
+    list.forEach(function (v) {
+      var b = document.createElement("button");
+      b.type = "button";
+      b.textContent = v;
+      b.addEventListener("click", function () { doSearch(v); });
+      chips.appendChild(b);
+    });
+  }
+
+  function renderResults(data) {
+    var esc = window.VS.escapeHtml;
+
+    if (!data.hits.length) {
+      results.innerHTML =
+        '<div class="empty">' +
+          '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>' +
+          "<p>No records for this identifier in the current source set.</p>" +
+        "</div>";
+      return;
+    }
+
+    results.innerHTML = data.hits.map(function (h) {
+      var conf = h.confidence === "high" ? "high" : h.confidence === "medium" ? "medium" : "low";
+      return (
+        '<div class="result">' +
+          '<div class="result-top">' +
+            '<span class="result-input">' + esc(h.source) + "</span>" +
+            '<span class="conf ' + conf + '"><i></i>' + esc(h.confidence) + " confidence</span>" +
+          "</div>" +
+          '<div class="muted" style="font-size:13px">Breached ' + esc(h.breached) + " · " + esc(h.kind) + " record</div>" +
+          '<div class="fieldchips">' +
+            h.fields.map(function (f) { return "<span>" + esc(f) + "</span>"; }).join("") +
+          "</div>" +
+        "</div>"
+      );
+    }).join("");
+  }
+
+  form.addEventListener("submit", function (e) {
+    e.preventDefault();
+    doSearch();
+  });
+
+  /* --------------------------------------------------------- settings -- */
+  var pwForm = el("pw-form");
+  if (pwForm) {
+    pwForm.addEventListener("submit", function (e) {
+      e.preventDefault();
+      var next = el("new-pw").value;
+      if (next !== el("confirm-new-pw").value) {
+        notice("New passwords do not match.", "error");
+        return;
+      }
+      fetch("/api/password", {
+        method: "POST",
+        credentials: "same-origin",
+        headers: { "Content-Type": "application/json", "X-CSRF-Token": state.csrf },
+        body: JSON.stringify({
+          currentPassword: el("current-pw").value,
+          newPassword: next,
+        }),
+      })
+        .then(function (r) { return r.json().then(function (d) { return { ok: r.ok, data: d }; }); })
+        .then(function (res) {
+          if (!res.ok) { notice(res.data.error || "Could not update password.", "error"); return; }
+          notice("Password updated. Other sessions were signed out.", "ok");
+          pwForm.reset();
+        });
+    });
+  }
+})();

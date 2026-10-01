@@ -1,0 +1,26 @@
+# Caddy reverse proxy for Veriscope.
+#
+# Caddy provisions and renews the TLS certificate automatically, so the app's
+# own HSTS header is intentionally not duplicated here.
+#
+# Install to /etc/caddy/Caddyfile, then:  systemctl reload caddy
+
+{$VERISCOPE_DOMAIN} {
+	encode zstd gzip
+
+	# The Node process listens on loopback only.
+	reverse_proxy 127.0.0.1:3000 {
+		header_up X-Forwarded-Proto {scheme}
+	}
+
+	header {
+		-Server
+		X-Content-Type-Options "nosniff"
+		Referrer-Policy "strict-origin-when-cross-origin"
+	}
+
+	log {
+		output file /var/log/caddy/veriscope.log
+		format json
+	}
+}

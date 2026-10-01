@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Sources — Veriscope</title>
+<meta name="description" content="Breach corpora, infostealer logs, social and web sources, and public registries queried in parallel.">
+<meta name="theme-color" content="#fbfaf8">
+<link rel="icon" href="/assets/favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="/css/site.css">
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+
+<header class="nav">
+  <div class="wrap nav-in">
+    <a class="brand" href="/"><img src="/assets/logo.svg" width="28" height="28" alt=""> Veriscope</a>
+    <nav class="nav-links" id="navlinks" aria-label="Primary">
+      <a href="/lookups.html">Lookups</a>
+      <a href="/sources.html" aria-current="page">Sources</a>
+      <a href="/pricing.html">Pricing</a>
+      <a href="/faq.html">FAQ</a>
+    </nav>
+    <div class="nav-right">
+      <span id="nav-user" class="nav-right" hidden></span>
+      <button class="burger" id="burger" aria-label="Toggle menu" aria-expanded="false" aria-controls="navlinks"><i></i></button>
+    </div>
+  </div>
+</header>
+
+<main id="main">
+  <section class="section">
+    <div class="wrap">
+      <div class="sec-head rv">
+        <p class="eyebrow">Sources</p>
+        <h2>Where the data comes from</h2>
+        <p class="lead">Results are aggregated across four categories. Every hit is tagged with its originating source so you can judge freshness and provenance.</p>
+      </div>
+
+      <div class="source-grid rv">
+        <article class="source">
+          <div class="source-top"><h3>Breach corpora</h3><span class="count">28 sources</span></div>
+          <p>Curated datasets from known credential-stuffing incidents and public leak disclosures. Matched on email, username and password hash.</p>
+        </article>
+        <article class="source">
+          <div class="source-top"><h3>Infostealer logs</h3><span class="count">11 sources</span></div>
+          <p>Output from commodity stealer malware, indexed by infected machine so repeated targets, domains and vault contents can be spotted.</p>
+        </article>
+        <article class="source">
+          <div class="source-top"><h3>Social and web</h3><span class="count">24 sources</span></div>
+          <p>Public profiles, handles and posts across social networks, developer platforms, marketplaces and gaming services.</p>
+        </article>
+        <article class="source">
+          <div class="source-top"><h3>Public registries</h3><span class="count">7 sources</span></div>
+          <p>WHOIS and DNS records, certificate transparency logs, IP geolocation, ASN data and open corporate registries.</p>
+        </article>
+      </div>
+
+      <div class="legal-note rv" style="margin-top:28px">
+        <b>Transparency by design.</b> Veriscope returns records that were already publicly indexed; it does not generate new private data. Every result includes a source link and the date the record was observed, so provenance is never ambiguous.
+      </div>
+    </div>
+  </section>
+
+  <section class="section section-alt">
+    <div class="wrap">
+      <div class="cta-in rv">
+        <h2>One query across all of them</h2>
+        <p class="lead">Normalised, deduplicated and correlated — so you spend time investigating, not juggling tabs.</p>
+        <div class="cta-btns">
+          <a class="btn btn-primary btn-lg" href="/register.html">Create a free account</a>
+          <a class="btn btn-ghost btn-lg" href="/pricing.html">Compare tiers</a>
+        </div>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer>
+  <div class="wrap">
+    <div class="foot-top">
+      <div class="foot-brand">
+        <a class="brand" href="/"><img src="/assets/logo.svg" width="28" height="28" alt=""> Veriscope</a>
+        <p>Correlated intelligence search across breach, stealer and public sources.</p>
+      </div>
+      <div class="foot-nav">
+        <div class="foot-col">
+          <h4>Product</h4>
+          <ul>
+            <li><a href="/lookups.html">Lookups</a></li>
+            <li><a href="/sources.html">Sources</a></li>
+            <li><a href="/pricing.html">Pricing</a></li>
+            <li><a href="/dashboard.html">Dashboard</a></li>
+          </ul>
+        </div>
+        <div class="foot-col">
+          <h4>Company</h4>
+          <ul>
+            <li><a href="/about.html">About</a></li>
+            <li><a href="/faq.html">FAQ</a></li>
+            <li><a href="/contact.html">Contact</a></li>
+          </ul>
+        </div>
+        <div class="foot-col">
+          <h4>Legal</h4>
+          <ul>
+            <li><a href="/legal.html#privacy">Privacy</a></li>
+            <li><a href="/legal.html#terms">Terms</a></li>
+            <li><a href="/legal.html#acceptable-use">Acceptable use</a></li>
+            <li><a href="/legal.html#gdpr">GDPR</a></li>
+          </ul>
+        </div>
+      </div>
+    </div>
+    <div class="foot-bot">
+      <span>&copy; 2026 Veriscope</span>
+      <span>All product names and marks are property of their respective owners.</span>
+    </div>
+  </div>
+</footer>
+
+<script src="/js/site.js"></script>
+</body>
+</html>

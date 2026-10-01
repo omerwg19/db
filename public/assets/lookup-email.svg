@@ -1,0 +1,33 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" width="48" height="48">
+  <defs>
+    <linearGradient id="acc" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#e8622c"/>
+      <stop offset="100%" stop-color="#c24a19"/>
+    </linearGradient>
+    <linearGradient id="accSoft" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#e8622c" stop-opacity="0.16"/>
+      <stop offset="100%" stop-color="#f2a93b" stop-opacity="0.10"/>
+    </linearGradient>
+    <linearGradient id="fadeDown" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#ffffff"/>
+      <stop offset="100%" stop-color="#fbfaf8"/>
+    </linearGradient>
+    <linearGradient id="fadeUp" x1="0" y1="1" x2="0" y2="0">
+      <stop offset="0%" stop-color="#ffffff"/>
+      <stop offset="100%" stop-color="#fbfaf8"/>
+    </linearGradient>
+    <radialGradient id="glowA" cx="0.5" cy="0.5" r="0.5">
+      <stop offset="0%" stop-color="#e8622c" stop-opacity="0.30"/>
+      <stop offset="100%" stop-color="#e8622c" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="glowB" cx="0.5" cy="0.5" r="0.5">
+      <stop offset="0%" stop-color="#3b7dd8" stop-opacity="0.22"/>
+      <stop offset="100%" stop-color="#3b7dd8" stop-opacity="0"/>
+    </radialGradient>
+    <pattern id="grid" width="48" height="48" patternUnits="userSpaceOnUse">
+      <path d="M48 0H0V48" fill="none" stroke="#141312" stroke-opacity="0.055" stroke-width="1"/>
+    </pattern>
+  </defs>
+    <rect width="48" height="48" rx="14" fill="#fbfaf8" stroke="#e6e2dc" stroke-width="1.5"/>
+    <g fill="none" stroke="#e8622c" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="12" y="17" width="24" height="16" rx="3"/><path d="m12.5 19 11.5 7.5L35.5 19"/></g>
+  </svg>

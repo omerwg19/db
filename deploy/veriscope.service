@@ -1,0 +1,35 @@
+[Unit]
+Description=Veriscope web app
+Documentation=https://github.com/your-org/veriscope
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=veriscope
+Group=veriscope
+WorkingDirectory=/srv/veriscope
+EnvironmentFile=/etc/veriscope.env
+ExecStart=/usr/bin/node server/index.mjs
+
+Restart=always
+RestartSec=5
+TimeoutStopSec=20
+KillSignal=SIGTERM
+
+# Hardening. The app only ever needs to write to data/.
+NoNewPrivileges=true
+PrivateTmp=true
+PrivateDevices=true
+ProtectSystem=strict
+ProtectHome=true
+ProtectKernelTunables=true
+ProtectControlGroups=true
+RestrictSUIDSGID=true
+LockPersonality=true
+ReadWritePaths=/srv/veriscope/data
+
+LimitNOFILE=65535
+
+[Install]
+WantedBy=multi-user.target

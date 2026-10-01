@@ -1,0 +1,16 @@
+{
+  "name": "veriscope",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Multi-page OSINT monitoring site with SQLite auth and a gated demo dashboard.",
+  "type": "module",
+  "engines": {
+    "node": ">=22.5.0"
+  },
+  "scripts": {
+    "start": "node server/index.mjs",
+    "check": "node tools/check-links.mjs",
+    "check:syntax": "node --check server/auth.mjs && node --check server/index.mjs"
+  },
+  "dependencies": {}
+}

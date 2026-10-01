@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Choose a new password — Veriscope</title>
+<meta name="robots" content="noindex">
+<meta name="theme-color" content="#fbfaf8">
+<link rel="icon" href="/assets/favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="/css/site.css">
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+<div class="auth-wrap">
+  <div class="auth-form-side">
+    <main class="auth-form" id="main">
+      <a class="brand" href="/" style="margin-bottom:32px"><img src="/assets/logo.svg" width="28" height="28" alt=""> Veriscope</a>
+      <div class="auth-head">
+        <h1>Choose a new password</h1>
+        <p>Setting a new password signs you out everywhere else.</p>
+      </div>
+      <div class="alert" id="alert" role="alert" aria-live="polite">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 8v5M12 16h.01"/></svg>
+        <span id="alert-text"></span>
+      </div>
+      <form id="form" novalidate>
+        <div class="field">
+          <label for="pw">New password</label>
+          <div class="input-wrap has-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="10" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+            <input id="pw" type="password" autocomplete="new-password" required placeholder="At least 10 characters">
+            <button class="reveal" id="reveal" type="button" aria-label="Show password">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7-10-7-10-7z"/><circle cx="12" cy="12" r="3"/></svg>
+            </button>
+          </div>
+          <div class="pw-meter" id="pw-meter" data-score="0" aria-hidden="true"><i></i><i></i><i></i><i></i></div>
+          <p class="hint">Strength: <span id="pw-label">—</span>. Mix letters with a number and a symbol.</p>
+        </div>
+        <div class="field">
+          <label for="confirm">Confirm new password</label>
+          <div class="input-wrap has-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m2 7 10 6 10-6"/></svg>
+            <input id="confirm" type="password" autocomplete="new-password" required placeholder="Repeat your password">
+          </div>
+        </div>
+        <button class="btn btn-primary btn-block btn-lg" id="submit" type="submit">Update password</button>
+      </form>
+    </main>
+  </div>
+  <aside class="auth-aside">
+    <div>
+      <div class="aside-mark" aria-hidden="true"><span class="on"></span><span class="on"></span><span></span></div>
+      <blockquote class="aside-quote"><p>Reset links are single-use and expire after 60 minutes.</p></blockquote>
+    </div>
+    <div class="aside-stats">
+      <div><b>70+</b><span>Sources</span></div>
+      <div><b>190</b><span>Countries</span></div>
+      <div><b>&lt;4s</b><span>Median</span></div>
+    </div>
+  </aside>
+</div>
+<script src="/js/site.js"></script>
+<script>
+(function(){
+  var token=new URLSearchParams(location.search).get('token');
+  var f=document.getElementById('form'),a=document.getElementById('alert'),t=document.getElementById('alert-text'),
+      s=document.getElementById('submit'),p=document.getElementById('pw'),c=document.getElementById('confirm');
+  function say(m,k){t.textContent=m;a.className='alert on alert-'+(k||'error');}
+  if(!token){
+    say('This link is missing its token. Request a new one.');
+    f.querySelectorAll('input,button').forEach(function(x){x.disabled=true;});
+    return;
+  }
+  f.addEventListener('submit',function(ev){
+    ev.preventDefault();
+    if(p.value.length<10){say('Password must be at least 10 characters.');return;}
+    if(!/[a-zA-Z]/.test(p.value)||!/\d/.test(p.value)||!/[^\w\s]/.test(p.value)){say('Mix letters with at least one number and one symbol.');return;}
+    if(p.value!==c.value){say('Passwords do not match.');return;}
+    s.disabled=true;s.textContent='Updating…';
+    fetch('/api/password/reset',{method:'POST',credentials:'same-origin',
+      headers:{'Content-Type':'application/json'},body:JSON.stringify({token:token,newPassword:p.value})})
+      .then(function(r){return r.json().then(function(d){return {ok:r.ok,data:d};});})
+      .then(function(res){
+        if(!res.ok){say(res.data.error||'Could not reset the password.');s.disabled=false;s.textContent='Update password';return;}
+        say('Password updated. You can now sign in.','ok');
+        setTimeout(function(){location.href='/login.html';},900);
+      })
+      .catch(function(){s.disabled=false;s.textContent='Update password';say('Network error. Try again.');});
+  });
+})();
+</script>
+</body>
+</html>
