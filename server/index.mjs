@@ -266,12 +266,18 @@ async function handleApi(req, res, url) {
     } catch {
       db = "error";
     }
+    const store = auth.storeStats();
     const body = {
       ok: db === "ok",
       db,
       uptime_s: Math.round(process.uptime()),
       node: process.version,
       db_path: process.env.DB_PATH || join(root, "data", "veriscope.db"),
+      // Deliberately no row counts here: this endpoint is unauthenticated, and
+      // how many accounts the site has is nobody else's business. The counts go
+      // to the boot log instead.
+      db_persistent: store.persistent,
+      db_bytes: store.bytes,
     };
     return json(res, db === "ok" ? 200 : 503, body);
   }
@@ -859,7 +865,24 @@ const server = createServer(async (req, res) => {
 
 server.listen(PORT, HOST, () => {
   console.log(`bugatti.lol running at http://${HOST}:${PORT}`);
-  console.log(`Database: ${process.env.DB_PATH || join(root, "data", "veriscope.db")}`);
+  const store = auth.storeStats();
+  console.log(
+    `Database: ${store.path} (${store.persistent ? "on the persistent volume" : "NOT on the persistent volume"})`
+  );
+  console.log(
+    `  rows: ${store.users} user(s), ${store.sessions} session(s), ${store.payments} payment(s)` +
+      (store.oldest ? `, oldest account ${store.oldest}` : ", no accounts yet")
+  );
+  if (store.bytes !== null) console.log(`  size: ${store.bytes} bytes`);
+  if (!store.persistent) {
+    // Loud on purpose: this is silent data loss, and it only shows up at the
+    // next deploy, long after whoever set it stopped thinking about it.
+    console.warn(
+      "  WARNING: the database is outside /home/node. Hyperlift discards " +
+        "everything outside that path on every build, so every account created " +
+        "here will vanish on the next deploy. Set DB_PATH=/home/node/data/veriscope.db."
+    );
+  }
   console.log(
     `Config: public_origin=${PUBLIC_ORIGIN} secure_cookies=${SECURE_COOKIES} ` +
       `mail_webhook=${MAIL_WEBHOOK ? "set" : "unset (links go to logs)"} ` +

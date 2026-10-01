@@ -7,7 +7,7 @@ import {
   timingSafeEqual,
   createHash,
 } from "node:crypto";
-import { mkdirSync } from "node:fs";
+import { mkdirSync, statSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -51,11 +51,41 @@ export class Auth {
     dbPath = String(process.env.DB_PATH ?? "").trim() || join(root, "data", "veriscope.db")
   ) {
     if (dbPath !== ":memory:") mkdirSync(dirname(dbPath), { recursive: true });
+    this.dbPath = dbPath;
     this.db = new DatabaseSync(dbPath);
     this.db.exec("PRAGMA journal_mode = WAL");
     this.db.exec("PRAGMA foreign_keys = ON");
     this.migrate();
     this.attempts = new Map();
+  }
+
+  /* Reports whether the store is actually sitting somewhere a redeploy will
+     keep. Hyperlift mounts its persistent volume at /home/node and discards
+     everything outside it, so a DB_PATH anywhere else looks completely healthy
+     until the next build silently empties it. Being able to see the row counts
+     at boot is what turns "my accounts vanished" into a diagnosable fact. */
+  storeStats() {
+    const users = this.db.prepare("SELECT COUNT(*) AS n FROM users").get()?.n ?? 0;
+    const sessions = this.db.prepare("SELECT COUNT(*) AS n FROM sessions").get()?.n ?? 0;
+    const payments = this.db.prepare("SELECT COUNT(*) AS n FROM payments").get()?.n ?? 0;
+    const oldest = this.db.prepare("SELECT MIN(created_at) AS t FROM users").get()?.t ?? null;
+
+    let bytes = null;
+    if (this.dbPath !== ":memory:") {
+      try {
+        bytes = statSync(this.dbPath).size;
+      } catch {
+        bytes = null;
+      }
+    }
+
+    // ":memory:" is a deliberate test setting, so it is not a misconfiguration.
+    const persistent =
+      this.dbPath === ":memory:" ||
+      this.dbPath === "/home/node/data/veriscope.db" ||
+      this.dbPath.startsWith("/home/node/");
+
+    return { path: this.dbPath, persistent, bytes, users, sessions, payments, oldest };
   }
 
   migrate() {
