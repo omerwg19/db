@@ -40,7 +40,9 @@ const PLANS = {
 export class Auth {
   // DB_PATH lets the database live on a mounted persistent volume, which is
   // what container platforms require. Without it every redeploy wipes accounts.
-  constructor(dbPath = process.env.DB_PATH || join(root, "data", "veriscope.db")) {
+  constructor(
+    dbPath = String(process.env.DB_PATH ?? "").trim() || join(root, "data", "veriscope.db")
+  ) {
     if (dbPath !== ":memory:") mkdirSync(dirname(dbPath), { recursive: true });
     this.db = new DatabaseSync(dbPath);
     this.db.exec("PRAGMA journal_mode = WAL");

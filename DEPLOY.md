@@ -47,7 +47,7 @@ In the app's environment settings:
 
 | Variable | Value |
 |---|---|
-| `PORT` | `3000` |
+| `PORT` | `8080` — Hyperlift's default application port |
 | `DB_PATH` | `/home/node/data/veriscope.db` |
 | `PUBLIC_ORIGIN` | `https://your-domain.com` |
 | `QUERY_DIGEST_PEPPER` | a long random string (generate one below) |

@@ -3,7 +3,9 @@
 # Works on Spaceship Hyperlift and any Docker host. Two rules matter:
 #   1. The persistent volume is mounted at /home/node, so ALL mutable state
 #      (the SQLite database) must live under it. App code goes in /app.
-#   2. Expose the port via the PORT environment variable, not EXPOSE.
+# 8080 is Hyperlift's default application port. Platform-injected PORT wins
+# over this value, so setting PORT in the dashboard also works.
+# Do not rely on EXPOSE here; Hyperlift routes using the environment variable.
 #
 # Required environment variables are set in the platform's dashboard:
 #   PUBLIC_ORIGIN, QUERY_DIGEST_PEPPER, MAIL_WEBHOOK, DB_PATH, PORT
@@ -12,7 +14,7 @@ FROM node:24-slim
 
 ENV NODE_ENV=production \
     HOST=0.0.0.0 \
-    PORT=3000 \
+    PORT=8080 \
     DB_PATH=/home/node/data/veriscope.db
 
 WORKDIR /app

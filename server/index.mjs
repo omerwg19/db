@@ -8,14 +8,22 @@ import { Auth } from "./auth.mjs";
 
 const root = join(dirname(fileURLToPath(import.meta.url)), "..");
 const PUBLIC = join(root, "public");
-const PORT = Number(process.env.PORT ?? 3000);
-const HOST = process.env.HOST ?? "127.0.0.1";
+
+// Env values are trimmed: `set VAR=value && cmd` in cmd/sh leaves a trailing
+// space, which silently breaks hostnames and numeric ports.
+const env = (name, fallback = "") => String(process.env[name] ?? "").trim() || fallback;
+
+const PORT = Number(env("PORT", "3000"));
+if (!Number.isInteger(PORT) || PORT < 1 || PORT > 65535) {
+  throw new Error(`PORT is not a valid port number: ${JSON.stringify(process.env.PORT)}`);
+}
+const HOST = env("HOST", "127.0.0.1");
 const COOKIE = "vs_session";
 
 // Cookies are marked Secure unless explicitly overridden for local testing.
-// Trimmed because `set VAR=0 && cmd` in cmd.exe yields a trailing space.
-const COOKIE_SECURE = String(process.env.SECURE_COOKIES ?? "").trim();
-const SECURE_COOKIES = COOKIE_SECURE === "1" || COOKIE_SECURE === "true" || COOKIE_SECURE === "";
+const COOKIE_SECURE = env("SECURE_COOKIES");
+const SECURE_COOKIES =
+  COOKIE_SECURE === "1" || COOKIE_SECURE === "true" || COOKIE_SECURE === "";
 
 const SESSION_TTL_MS = 1000 * 60 * 60 * 24 * 30;
 const SHORT_SESSION_MS = 1000 * 60 * 60 * 12;
@@ -24,8 +32,8 @@ const VERIFY_TTL_MS = 1000 * 60 * 60 * 24;
 
 // Where to hand reset / verification links. In production this must be the
 // public origin so the emailed link resolves to the live site.
-const PUBLIC_ORIGIN = process.env.PUBLIC_ORIGIN ?? `http://${HOST}:${PORT}`;
-const MAIL_WEBHOOK = process.env.MAIL_WEBHOOK ?? "";
+const PUBLIC_ORIGIN = env("PUBLIC_ORIGIN", `http://${HOST}:${PORT}`).replace(/\/+$/, "");
+const MAIL_WEBHOOK = env("MAIL_WEBHOOK");
 
 const auth = new Auth();
 auth.purgeExpired();
