@@ -62,6 +62,44 @@ node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
 > volume there and wipes everything outside it on each deploy. This single
 > variable is the difference between keeping your accounts and losing them.
 
+### 3b. Crypto payments (optional)
+
+Pro costs $10 for 30 days. Without these variables the checkout button is
+disabled and no payment can be taken — the app never fakes a paid state.
+
+| Variable | Value |
+|---|---|
+| `NOWPAYMENTS_API_KEY` | API key from the NOWPayments dashboard |
+| `NOWPAYMENTS_IPN_SECRET` | the IPN/callback secret from the same dashboard |
+| `CRYPTO_PAY_CURRENCY` | coin shown at checkout, e.g. `btc`, `eth`, `usdt` (default `btc`) |
+| `NOWPAYMENTS_SANDBOX` | `1` to use the sandbox API while testing |
+
+Then add the callback URL in the NOWPayments dashboard:
+
+```
+https://your-domain.com/api/billing/webhook
+```
+
+Use the **sandbox** keys first: checkout then takes you to a test payment page
+and no real funds move. Only switch to live keys once you have watched one
+sandbox payment land and the account upgrade on its own.
+
+How it behaves:
+
+- Checkout creates the invoice server-side at a fixed $10; the amount is never
+  read from the browser.
+- The webhook verifies NOWPayments' HMAC signature, then re-reads the payment
+  from their API before upgrading. A callback that cannot be confirmed leaves
+  the account on Free.
+- `provider_ref` is unique, so a redelivered webhook cannot grant a second
+  period.
+- Access is a prepaid window: `users.plan_expires_at` is compared at read
+  time, so a lapsed subscription drops to Free with no cron job, and a refund
+  revokes the upgrade.
+
+Crypto has no recurring billing, so nothing charges itself. Renewal is a new
+payment, which the dashboard offers explicitly.
+
 ### 4. Attach the domain
 
 Hyperlift provides built-in SSL and supports a custom domain. Add the domain to

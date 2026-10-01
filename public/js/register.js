@@ -71,9 +71,14 @@
         }
         say("Account created. Taking you to your dashboard…", "ok");
         // Carry any query typed on the home page through to the dashboard.
-        var q = new URLSearchParams(location.search).get("q");
+        var params = new URLSearchParams(location.search);
+        var q = params.get("q");
+        var plan = params.get("plan");
+        // Someone clicking "Upgrade to Pro" on pricing should land on checkout
+        // after signing up, not have to hunt for the button again.
+        var to = plan === "pro" ? "/checkout.html" : "/dashboard.html" + (q ? "?q=" + encodeURIComponent(q) : "");
         setTimeout(function () {
-          location.href = "/dashboard.html" + (q ? "?q=" + encodeURIComponent(q) : "");
+          location.href = to;
         }, 650);
       })
       .catch(function () {

@@ -13,6 +13,7 @@
 #
 # Required environment variables, set in the platform dashboard:
 #   PUBLIC_ORIGIN, QUERY_DIGEST_PEPPER, MAIL_WEBHOOK, DB_PATH, PORT
+# For crypto checkout, also see DEPLOY.md section 3b.
 
 FROM node:24-slim
 

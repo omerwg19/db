@@ -32,9 +32,16 @@ const DIGEST_PEPPER =
   })();
 
 const PLANS = {
-  free: { label: "Free", dailyQuota: 10 },
-  pro: { label: "Pro", dailyQuota: 500 },
-  enterprise: { label: "Enterprise", dailyQuota: 15000 },
+  free: { label: "Free", dailyQuota: 10, priceUsd: 0, periodDays: 0 },
+  pro: { label: "Pro", dailyQuota: 500, priceUsd: 10, periodDays: 30 },
+  // Sold by hand, not through self-serve checkout.
+  enterprise: { label: "Enterprise", dailyQuota: 15000, priceUsd: null, periodDays: 0 },
+};
+
+// Plans a customer can buy themselves, mapped to the provider price id. The
+// amount is settled in the provider's request, never trusted from the client.
+const CHECKOUT_PLANS = {
+  pro: { providerPriceId: null, amountUsd: 10 },
 };
 
 export class Auth {
@@ -110,7 +117,39 @@ export class Auth {
       CREATE INDEX IF NOT EXISTS idx_tokens_hash    ON auth_tokens(token_hash);
       CREATE INDEX IF NOT EXISTS idx_audit_user    ON audit_log(user_id, created_at DESC);
       CREATE INDEX IF NOT EXISTS idx_audit_time    ON audit_log(created_at);
+
+      -- One row per provider payment attempt. provider_ref is UNIQUE, which is
+      -- what makes the webhook safe to retry: a duplicate delivery hits the
+      -- constraint instead of granting a second period of access.
+      CREATE TABLE IF NOT EXISTS payments (
+        id            INTEGER PRIMARY KEY AUTOINCREMENT,
+        user_id       INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+        provider      TEXT    NOT NULL,
+        provider_ref  TEXT    NOT NULL UNIQUE,
+        invoice_ref   TEXT,
+        plan          TEXT    NOT NULL,
+        amount_usd    REAL    NOT NULL,
+        currency      TEXT,
+        crypto        TEXT,
+        status        TEXT    NOT NULL DEFAULT 'pending',
+        period_days   INTEGER NOT NULL DEFAULT 30,
+        created_at    INTEGER NOT NULL,
+        paid_at       INTEGER,
+        raw           TEXT
+      );
+      CREATE INDEX IF NOT EXISTS idx_payments_user ON payments(user_id, created_at DESC);
     `);
+
+    // Subscriptions are prepaid periods, so paid access needs an expiry. Added
+    // separately because existing databases already have a users table.
+    if (
+      !this.db
+        .prepare("PRAGMA table_info(users)")
+        .all()
+        .some((c) => c.name === "plan_expires_at")
+    ) {
+      this.db.exec("ALTER TABLE users ADD COLUMN plan_expires_at INTEGER");
+    }
 
     // Early local builds persisted the raw search string. Drop it on sight and
     // rebuild with the digest-only shape: what was searched must never persist.
@@ -206,15 +245,26 @@ export class Auth {
       .get(String(email).trim().toLowerCase());
   }
 
+  // Access is a prepaid period, not a permanent flag. Once plan_expires_at
+  // passes the account reverts to free until the next payment is applied, so
+  // there is no background job needed to expire subscriptions.
+  effectivePlan(row) {
+    if (!row || row.plan === "free" || !PLANS[row.plan]) return "free";
+    if (row.plan_expires_at && row.plan_expires_at <= Date.now()) return "free";
+    return row.plan;
+  }
+
   publicUser(row) {
-    const plan = PLANS[row.plan] ?? PLANS.free;
+    const key = this.effectivePlan(row);
+    const plan = PLANS[key] ?? PLANS.free;
     return {
       id: row.id,
       email: row.email,
       name: row.name,
-      plan: row.plan,
+      plan: key,
       planLabel: plan.label,
       dailyQuota: plan.dailyQuota,
+      planExpiresAt: row.plan_expires_at ?? null,
       verified: !!row.verified,
       createdAt: row.created_at,
     };
@@ -224,6 +274,92 @@ export class Auth {
     if (!PLANS[plan]) return this.getUserById(userId);
     this.db.prepare("UPDATE users SET plan = ? WHERE id = ?").run(plan, userId);
     return this.getUserById(userId);
+  }
+
+  /* ----------------------------------------------------------- payments -- */
+
+  // Registers an invoice we handed out to the provider. Returns null when the
+  // provider reference already exists so a retried request is a no-op.
+  createPayment({ userId, provider, providerRef, invoiceRef, plan, amountUsd, periodDays }) {
+    try {
+      const info = this.db
+        .prepare(
+          `INSERT INTO payments
+             (user_id, provider, provider_ref, invoice_ref, plan,
+              amount_usd, status, period_days, created_at)
+           VALUES (?, ?, ?, ?, ?, ?, 'pending', ?, ?)`
+        )
+        .run(userId, provider, providerRef, invoiceRef, plan, amountUsd, periodDays, Date.now());
+      return info.lastInsertRowid;
+    } catch (err) {
+      if (String(err.message).includes("UNIQUE")) return null;
+      throw err;
+    }
+  }
+
+  getPaymentByRef(providerRef) {
+    return this.db.prepare("SELECT * FROM payments WHERE provider_ref = ?").get(providerRef);
+  }
+
+  listPayments(userId) {
+    return this.db
+      .prepare("SELECT * FROM payments WHERE user_id = ? ORDER BY created_at DESC LIMIT 20")
+      .all(userId)
+      .map((p) => ({
+        id: p.id,
+        provider: p.provider,
+        plan: p.plan,
+        amountUsd: p.amount_usd,
+        crypto: p.crypto,
+        status: p.status,
+        createdAt: p.created_at,
+        paidAt: p.paid_at,
+      }));
+  }
+
+  // Applies a confirmed payment. Idempotent on payment id: the UNIQUE
+  // provider_ref constraint means NOWPayments retrying a webhook delivery will
+  // not grant a second 30 days. Renewals stack onto whatever is left, so
+  // paying early extends rather than discards the current period.
+  applyPayment(paymentId, { crypto = null, status = "finished", raw = null } = {}) {
+    const row = this.db.prepare("SELECT * FROM payments WHERE id = ?").get(paymentId);
+    if (!row) return null;
+    if (row.status === "finished") return { user: this.getUserById(row.user_id), applied: false };
+
+    const now = Date.now();
+    const base = row.user_id ? this.db.prepare("SELECT plan, plan_expires_at FROM users WHERE id = ?").get(row.user_id) : null;
+    const live = base && base.plan === row.plan && base.plan_expires_at && base.plan_expires_at > now;
+    const from = live ? base.plan_expires_at : now;
+    const expires = from + row.period_days * 86400000;
+
+    this.db
+      .prepare("UPDATE payments SET status = ?, crypto = ?, raw = ?, paid_at = ? WHERE id = ?")
+      .run(status, crypto, raw ? JSON.stringify(raw).slice(0, 4000) : null, now, paymentId);
+    this.db
+      .prepare("UPDATE users SET plan = ?, plan_expires_at = ? WHERE id = ?")
+      .run(row.plan, expires, row.user_id);
+
+    this.log("payment.applied", {
+      userId: row.user_id,
+      detail: `${row.plan} +${row.period_days}d until ${new Date(expires).toISOString()}`,
+    });
+    return { user: this.getUserById(row.user_id), applied: true };
+  }
+
+  // Refund/chargeback: revoke the period this payment bought rather than
+  // silently leaving the account upgraded.
+  revokePayment(paymentId, raw = null) {
+    const row = this.db.prepare("SELECT * FROM payments WHERE id = ?").get(paymentId);
+    if (!row) return null;
+    this.db.prepare("UPDATE payments SET status = 'refunded', raw = ? WHERE id = ?").run(
+      raw ? JSON.stringify(raw).slice(0, 4000) : null,
+      paymentId
+    );
+    this.db
+      .prepare("UPDATE users SET plan = 'free', plan_expires_at = NULL WHERE id = ?")
+      .run(row.user_id);
+    this.log("payment.revoked", { userId: row.user_id, detail: `plan ${row.plan}` });
+    return this.getUserById(row.user_id);
   }
 
   setVerified(userId, verified = true) {
@@ -406,4 +542,4 @@ export class Auth {
   }
 }
 
-export { PLANS };
+export { PLANS, CHECKOUT_PLANS };

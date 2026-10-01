@@ -20,6 +20,7 @@
       window.VS.showSession({ user: d.user, csrf: d.csrf, quotaUsed: d.quotaUsed });
       render();
       renderHistory();
+      renderSubscription();
       consumePending();
     })
     .catch(function () { location.replace("/login.html"); });
@@ -30,6 +31,49 @@
       try { localStorage.removeItem(historyKey()); } catch (e) {}
       renderHistory();
     });
+  }
+
+  /* ------------------------------------------------------- subscription -- */
+  function renderSubscription() {
+    var plan = el("sub-plan");
+    if (!plan) return;
+
+    fetch("/api/billing/status", { credentials: "same-origin" })
+      .then(function (r) { return r.json(); })
+      .then(function (d) {
+        plan.textContent = d.planLabel;
+        plan.className = "plan-pill";
+
+        if (d.plan === "pro" && d.planExpiresAt) {
+          var end = new Date(d.planExpiresAt);
+          var days = Math.ceil((d.planExpiresAt - Date.now()) / 86400000);
+          el("sub-access").textContent =
+            days > 0 ? days + (days === 1 ? " day left" : " days left") : "expired";
+          el("sub-renewal").textContent =
+            days > 0
+              ? "expires " + end.toLocaleDateString(undefined, { day: "numeric", month: "short", year: "numeric" })
+              : "lapsed";
+          if (days <= 0) plan.className = "plan-pill lapsed";
+          el("sub-cta").textContent = "Renew Pro";
+          el("sub-note").textContent = days <= 0
+            ? "Your paid period ended, so the Free quota applies again. Renew to restore Pro."
+            : "Renews when you pay again. Nothing is charged automatically.";
+        } else {
+          el("sub-access").textContent = "Free quota \u00b7 " + d.dailyQuota + " queries/day";
+          el("sub-renewal").textContent = "\u2014";
+          el("sub-cta").textContent = "Upgrade to Pro";
+          el("sub-note").textContent = "One payment of $10 buys 30 days of Pro: 500 queries a day and every source.";
+        }
+
+        // Provider offline: do not present a button that cannot work.
+        if (d.provider && !d.provider.api) {
+          el("sub-cta").textContent = "Payments unavailable";
+          el("sub-cta").removeAttribute("href");
+          el("sub-cta").className = "btn btn-ghost btn-block";
+          el("sub-note").textContent = "Checkout is not configured yet, so no payment can be taken.";
+        }
+      })
+      .catch(function () {});
   }
 
   function render() {

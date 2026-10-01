@@ -4,7 +4,13 @@ import { createServer } from "node:http";
 import { readFile, stat } from "node:fs/promises";
 import { join, dirname, extname, normalize } from "node:path";
 import { fileURLToPath } from "node:url";
-import { Auth } from "./auth.mjs";
+import { Auth, PLANS, CHECKOUT_PLANS } from "./auth.mjs";
+import {
+  billingConfigured,
+  verifyIpnSignature,
+  confirmPayment,
+  createCheckout,
+} from "./billing.mjs";
 
 const root = join(dirname(fileURLToPath(import.meta.url)), "..");
 const PUBLIC = join(root, "public");
@@ -266,6 +272,96 @@ async function handleApi(req, res, url) {
       db_path: process.env.DB_PATH || join(root, "data", "veriscope.db"),
     };
     return json(res, db === "ok" ? 200 : 503, body);
+  }
+
+  /* ---- billing: prepaid Pro access, paid in crypto ---- */
+  if (route === "GET /api/billing/status") {
+    const s = auth.getSessionUser(token);
+    if (!s) return json(res, 401, { error: "Sign in to view billing." });
+    return json(res, 200, {
+      plan: s.user.plan,
+      planLabel: s.user.planLabel,
+      planExpiresAt: s.user.planExpiresAt,
+      dailyQuota: s.user.dailyQuota,
+      payments: auth.listPayments(s.user.id),
+      plans: Object.fromEntries(
+        Object.entries(CHECKOUT_PLANS).map(([key, v]) => [
+          key,
+          { label: PLANS[key].label, amountUsd: v.amountUsd, periodDays: PLANS[key].periodDays },
+        ])
+      ),
+      provider: billingConfigured(),
+    });
+  }
+
+  if (route === "POST /api/billing/checkout") {
+    const s = auth.getSessionUser(token);
+    if (!s) return json(res, 401, { error: "Sign in first." });
+    const body = await readBody(req);
+    const plan = String(body.plan ?? "").trim();
+    if (!CHECKOUT_PLANS[plan]) {
+      return json(res, 400, { error: "That plan is not available for self-serve checkout." });
+    }
+    try {
+      const invoice = await createCheckout({
+        user: s.user,
+        plan,
+        origin: PUBLIC_ORIGIN,
+        ip,
+      });
+      const rowId = auth.createPayment({
+        userId: s.user.id,
+        provider: "nowpayments",
+        providerRef: invoice.paymentId,
+        invoiceRef: invoice.orderId,
+        plan,
+        amountUsd: invoice.priceAmount,
+        periodDays: invoice.periodDays,
+      });
+      if (!rowId) return json(res, 409, { error: "That invoice is already open." });
+      auth.log("billing.checkout", {
+        userId: s.user.id,
+        detail: `${plan} ${invoice.paymentId}`,
+      });
+      return json(res, 200, invoice);
+    } catch {
+      auth.log("billing.checkout.failed", { userId: s.user.id, detail: plan });
+      return json(res, 502, { error: "Checkout is unavailable right now. Try again shortly." });
+    }
+  }
+
+  // Provider callback. Unauthenticated by necessity, so every request is
+  // gated on the HMAC signature first and the status is then re-read from the
+  // provider API rather than taken from the caller's body.
+  if (route === "POST /api/billing/webhook") {
+    const body = await readBody(req);
+    if (!verifyIpnSignature(body, req.headers["x-nowpayments-signature"])) {
+      auth.log("billing.webhook.rejected", { detail: "signature" });
+      return json(res, 401, { error: "Bad signature." });
+    }
+    const ref = String(body.payment_id ?? "");
+    const row = auth.getPaymentByRef(ref);
+    if (!row) return json(res, 200, { ok: true, ignored: true });
+
+    const status = String(body.payment_status ?? "");
+    if (["refunded", "failed", "expired"].includes(status)) {
+      if (row.status === "finished") auth.revokePayment(row.id, body);
+      return json(res, 200, { ok: true });
+    }
+    if (status !== "finished") return json(res, 200, { ok: true, pending: true });
+
+    try {
+      const remote = await confirmPayment(ref);
+      const paid = Number(remote.actually_paid ?? 0);
+      // Underpayment must never upgrade the account.
+      if (remote.payment_status !== "finished" || paid + 1e-8 < row.amount_usd) {
+        return json(res, 200, { ok: true, pending: true, reason: "underpaid" });
+      }
+      auth.applyPayment(row.id, { crypto: remote.pay_currency, status, raw: remote });
+    } catch {
+      return json(res, 200, { ok: true, pending: true });
+    }
+    return json(res, 200, { ok: true });
   }
 
   /* ---- session introspection (used by the SPA-ish nav) ---- */

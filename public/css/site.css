@@ -493,3 +493,37 @@ footer{border-top:1px solid var(--line);background:var(--card);padding:52px 0 36
   text-decoration: underline;
 }
 .history-clear:hover { color: var(--accent-deep); }
+
+/* ------------------------------------------------------------- billing -- */
+.kv {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 16px;
+  padding: 11px 0;
+  border-bottom: 1px solid var(--line);
+}
+.kv:last-child { border-bottom: 0; }
+.kv > span { color: var(--muted); font-size: 14px; }
+.kv > b { font-size: 15px; }
+.kv.total {
+  border-bottom: 0;
+  border-top: 1px solid var(--line);
+  margin-top: 4px;
+  padding-top: 14px;
+}
+.kv.total > b { font-size: 24px; letter-spacing: -0.02em; }
+
+.plan-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  background: var(--accent-soft);
+  color: var(--accent-deep);
+}
+.plan-pill.lapsed { background: var(--paper); color: var(--muted); border: 1px solid var(--line); }
