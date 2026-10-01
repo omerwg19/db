@@ -62,6 +62,46 @@ node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
 > volume there and wipes everything outside it on each deploy. This single
 > variable is the difference between keeping your accounts and losing them.
 
+### 3a. Prove your accounts survive a deploy
+
+Do not assume this works. A database in the wrong place, or a volume that is not
+actually attached, looks completely healthy right up until the first build after
+the accounts exist, and then every account is gone with nothing in the logs to
+explain it.
+
+Check the store is really on the volume:
+
+```bash
+curl -s https://your-domain.com/api/health
+```
+
+```json
+{"ok":true,"db":"ok","db_path":"/home/node/data/veriscope.db","db_persistent":true}
+```
+
+`db_persistent` is computed from `DB_PATH`, not hard-coded, so `false` means the
+path is wrong and accounts will vanish on the next deploy. Fix it and restart.
+
+Then run the real test, once, before you care about this:
+
+1. Create an account.
+2. Push a commit (or press Rebuild) and wait for the deploy to finish.
+3. Sign in with that account.
+
+If the sign-in fails, the volume is not surviving the build. In Hyperlift, open
+the application's settings and confirm a persistent volume/disk is attached and
+that it covers `/home/node`. The boot log states the resolved path, the row
+counts, and a loud warning if the database is outside the volume:
+
+```
+Database: /home/node/data/veriscope.db (on the persistent volume)
+  rows: 3 user(s), 2 session(s), 0 payment(s), oldest account 2026-09-30 11:02:41
+  size: 57344 bytes
+```
+
+Comparing `rows:` between two deploys is the quickest way to see a database being
+reset. Back the volume up before you need it: `deploy/backup.sh`.
+
 ### 3b. Crypto payments (optional)
 
 Pro costs $10 for 30 days. Without these variables the checkout button is
