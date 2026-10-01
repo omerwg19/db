@@ -3,6 +3,7 @@
 import { createServer } from "node:http";
 import { readFile, stat } from "node:fs/promises";
 import { join, dirname, extname, normalize } from "node:path";
+import { createHash } from "node:crypto";
 import { fileURLToPath } from "node:url";
 import { Auth, PLANS, CHECKOUT_PLANS } from "./auth.mjs";
 import {
@@ -699,6 +700,57 @@ async function handleApi(req, res, url) {
 }
 
 /* -------------------------------------------------------------- static -- */
+
+// Static assets are cached hard (see serveStatic), so a deploy that changes
+// CSS or JS is invisible to anyone holding the old copy: the HTML is revalidated
+// and updates, but the stylesheet does not. That leaves pages rendering with
+// markup that has no matching styles -- inline SVG fell back to solid black and
+// [data-theme="dark"] simply did not exist, so the toggle did nothing.
+// Rewriting local asset URLs to carry a version tag derived from the file's
+// mtime+size means a changed asset always produces a new URL, so the cache can
+// never serve the wrong bytes, while unchanged assets stay cached.
+const assetVersions = new Map();
+
+async function assetTag(file) {
+  try {
+    const info = await stat(file);
+    const key = `${info.mtimeMs}:${info.size}`;
+    const hit = assetVersions.get(file);
+    if (hit && hit.key === key) return hit.tag;
+    const tag = createHash("sha1").update(key).digest("hex").slice(0, 8);
+    assetVersions.set(file, { key, tag });
+    return tag;
+  } catch {
+    return null;
+  }
+}
+
+const ASSET_REF = /(<(?:link|script|img)\b[^>]*?\s(?:href|src)=")(\/[^"?#]+\.(?:css|js|png|svg|jpg|jpeg|gif|webp|ico|woff2?))(\?[^"]*)?(")/gi;
+
+async function versionAssetRefs(html) {
+  const paths = [...new Set([...html.matchAll(ASSET_REF)].map((m) => m[2]))];
+  const tags = new Map();
+  await Promise.all(
+    paths.map(async (p) => tags.set(p, await assetTag(join(PUBLIC, decodeURIComponent(p)))))
+  );
+  return html.replace(ASSET_REF, (whole, pre, path, query = "", post) => {
+    const tag = tags.get(path);
+    return tag ? `${pre}${path}?v=${tag}${post}` : whole;
+  });
+}
+
+async function readHtml(file) {
+  try {
+    // Deliberately not cached: the asset versions baked into this HTML depend on
+    // the mtime of other files, so keying on this file alone would keep serving
+    // stale version tags after a stylesheet-only change. assetTag() is the part
+    // worth caching, and it is.
+    return await versionAssetRefs(await readFile(file, "utf8"));
+  } catch {
+    return null;
+  }
+}
+
 async function serveStatic(res, url) {
   let pathname = decodeURIComponent(url.pathname);
   if (pathname.endsWith("/")) pathname += "index.html";
@@ -717,8 +769,13 @@ async function serveStatic(res, url) {
     // Unknown path -> 404 page
     const notFound = join(PUBLIC, "404.html");
     try {
-      const body = await readFile(notFound);
-      res.writeHead(404, { "Content-Type": MIME[".html"] }).end(body);
+      const body = await readHtml(notFound);
+      res.writeHead(404, {
+        "Content-Type": MIME[".html"],
+        "Content-Length": Buffer.byteLength(body ?? ""),
+        "Cache-Control": "no-cache",
+        ...securityHeaders(),
+      }).end(body ?? "Not found");
     } catch {
       res.writeHead(404, { "Content-Type": "text/plain" }).end("Not found");
     }
@@ -726,12 +783,30 @@ async function serveStatic(res, url) {
   }
 
   try {
-    const body = await readFile(file);
     const ext = extname(file).toLowerCase();
+    if (ext === ".html") {
+      const body = await readHtml(file);
+      if (body === null) {
+        res.writeHead(404, { "Content-Type": "text/plain" }).end("Not found");
+        return;
+      }
+      res.writeHead(200, {
+        "Content-Type": MIME[".html"],
+        "Content-Length": Buffer.byteLength(body),
+        // HTML must be revalidated so it can pick up new asset versions; the
+        // versioned URLs it references are what actually bust the asset cache.
+        "Cache-Control": "no-cache",
+        ...securityHeaders(),
+      });
+      res.end(body);
+      return;
+    }
+
+    const body = await readFile(file);
     res.writeHead(200, {
       "Content-Type": MIME[ext] ?? "application/octet-stream",
       "Content-Length": body.length,
-      "Cache-Control": ext === ".html" ? "no-cache" : "public, max-age=86400",
+      "Cache-Control": "public, max-age=86400",
       ...securityHeaders(),
     });
     res.end(body);
