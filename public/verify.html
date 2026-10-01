@@ -3,20 +3,25 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Confirm your email — Veriscope</title>
+<title>Confirm your email â€” bugatti.lol</title>
 <meta name="robots" content="noindex">
 <meta name="theme-color" content="#fbfaf8">
 <link rel="icon" href="/assets/favicon.svg" type="image/svg+xml">
+<script src="/js/theme-init.js"></script>
 <link rel="stylesheet" href="/css/site.css">
 </head>
 <body>
+  <button class="theme-btn theme-float" id="theme-btn" type="button" aria-label="Switch to dark theme" title="Switch theme">
+    <svg class="i-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg>
+    <svg class="i-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4.2"/><path d="M12 2v2.4M12 19.6V22M2 12h2.4M19.6 12H22M4.9 4.9l1.7 1.7M17.4 17.4l1.7 1.7M19.1 4.9l-1.7 1.7M6.6 17.4l-1.7 1.7"/></svg>
+  </button>
 <a class="skip" href="#main">Skip to content</a>
 <div class="auth-wrap">
   <div class="auth-form-side">
     <main class="auth-form" id="main" style="text-align:center">
-      <a class="brand" href="/" style="margin-bottom:32px"><img src="/assets/logo.svg" width="28" height="28" alt=""> Veriscope</a>
+      <a class="brand" href="/" style="margin-bottom:32px"><img src="/assets/logo.svg" width="28" height="28" alt=""> bugatti.lol</a>
       <div class="auth-head">
-        <h1 id="title">Confirming your email…</h1>
+        <h1 id="title">Confirming your emailâ€¦</h1>
         <p id="body-text">One moment.</p>
       </div>
       <div id="actions" style="display:none;gap:10px;flex-wrap:wrap;justify-content:center"></div>
@@ -34,28 +39,7 @@
     </div>
   </aside>
 </div>
-<script>
-(function(){
-  var title=document.getElementById('title'),body=document.getElementById('body-text'),
-      actions=document.getElementById('actions'),token=new URLSearchParams(location.search).get('token');
-  function done(head,text,links){
-    title.textContent=head;body.textContent=text;
-    actions.style.display='flex';
-    actions.innerHTML=links.map(function(l){return '<a class="btn '+l.cls+'" href="'+l.href+'">'+l.text+'</a>';}).join('');
-  }
-  if(!token){done('Link is incomplete','This confirmation link is missing its token. Request a new one from your dashboard.',[{text:'Go to dashboard',href:'/dashboard.html',cls:'btn-primary'}]);return;}
-  fetch('/api/verify',{method:'POST',credentials:'same-origin',headers:{'Content-Type':'application/json'},
-    body:JSON.stringify({token:token})})
-    .then(function(r){return r.json().then(function(d){return {ok:r.ok,data:d};});})
-    .then(function(res){
-      if(res.ok) done('Email confirmed','Your address is verified. Everything on your account is now active.',[
-        {text:'Go to dashboard',href:'/dashboard.html',cls:'btn-primary'},
-        {text:'Home',href:'/',cls:'btn-ghost'}]);
-      else done('That link did not work',res.data.error||'The confirmation link is invalid or has expired.',[
-        {text:'Request a new link',href:'/dashboard.html',cls:'btn-primary'}]);
-    })
-    .catch(function(){done('Network error','We could not reach the server. Check your connection and try again.',[{text:'Back',href:'/',cls:'btn-ghost'}]);});
-})();
-</script>
+<script src="/js/site.js"></script>
+<script src="/js/verify.js"></script>
 </body>
 </html>

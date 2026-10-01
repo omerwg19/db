@@ -3,10 +3,11 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Contact — Veriscope</title>
-<meta name="description" content="Talk to the Veriscope team about Enterprise, API access, reselling or a specific investigation.">
+<title>Contact â€” bugatti.lol</title>
+<meta name="description" content="Talk to the bugatti.lol team about Enterprise, API access, reselling or a specific investigation.">
 <meta name="theme-color" content="#fbfaf8">
 <link rel="icon" href="/assets/favicon.svg" type="image/svg+xml">
+<script src="/js/theme-init.js"></script>
 <link rel="stylesheet" href="/css/site.css">
 </head>
 <body>
@@ -14,7 +15,7 @@
 
 <header class="nav">
   <div class="wrap nav-in">
-    <a class="brand" href="/"><img src="/assets/logo.svg" width="28" height="28" alt=""> Veriscope</a>
+    <a class="brand" href="/"><img src="/assets/logo.svg" width="28" height="28" alt=""> bugatti.lol</a>
     <nav class="nav-links" id="navlinks" aria-label="Primary">
       <a href="/lookups.html">Lookups</a>
       <a href="/sources.html">Sources</a>
@@ -23,6 +24,10 @@
     </nav>
     <div class="nav-right">
       <span id="nav-user" class="nav-right" hidden></span>
+        <button class="theme-btn" id="theme-btn" type="button" aria-label="Switch to dark theme" title="Switch theme">
+          <svg class="i-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg>
+          <svg class="i-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4.2"/><path d="M12 2v2.4M12 19.6V22M2 12h2.4M19.6 12H22M4.9 4.9l1.7 1.7M17.4 17.4l1.7 1.7M19.1 4.9l-1.7 1.7M6.6 17.4l-1.7 1.7"/></svg>
+        </button>
       <button class="burger" id="burger" aria-label="Toggle menu" aria-expanded="false" aria-controls="navlinks"><i></i></button>
     </div>
   </div>
@@ -54,7 +59,7 @@
             </div>
             <div class="field">
               <label for="c-topic">What is this about?</label>
-              <div class="input-wrap"><input id="c-topic" type="text" placeholder="Enterprise, API, reselling, other…"></div>
+              <div class="input-wrap"><input id="c-topic" type="text" placeholder="Enterprise, API, reselling, otherâ€¦"></div>
             </div>
             <div class="field">
               <label for="c-msg">Message</label>
@@ -71,11 +76,11 @@
           <div class="panel-head"><h3>Direct</h3></div>
           <div class="panel-body">
             <p class="muted" style="font-size:13.5px;margin-bottom:4px">General</p>
-            <p class="mono" style="font-size:14px;margin-bottom:18px">hello@veriscope.app</p>
+            <p class="mono" style="font-size:14px;margin-bottom:18px">hello@bugatti.lol.app</p>
             <p class="muted" style="font-size:13.5px;margin-bottom:4px">Security disclosures</p>
-            <p class="mono" style="font-size:14px;margin-bottom:18px">security@veriscope.app</p>
+            <p class="mono" style="font-size:14px;margin-bottom:18px">security@bugatti.lol.app</p>
             <p class="muted" style="font-size:13.5px;margin-bottom:4px">Data removal requests</p>
-            <p class="mono" style="font-size:14px">privacy@veriscope.app</p>
+            <p class="mono" style="font-size:14px">privacy@bugatti.lol.app</p>
           </div>
         </div>
         <div class="panel rv">
@@ -92,31 +97,13 @@
 <footer>
   <div class="wrap">
     <div class="foot-bot" style="border:0;padding-top:0">
-      <span>&copy; 2026 Veriscope</span>
-      <span><a href="/legal.html#privacy">Privacy</a> · <a href="/legal.html#terms">Terms</a></span>
+      <span>&copy; 2026 bugatti.lol</span>
+      <span><a href="/legal.html#privacy">Privacy</a> Â· <a href="/legal.html#terms">Terms</a></span>
     </div>
   </div>
 </footer>
 
 <script src="/js/site.js"></script>
-<script>
-(function(){
-  var f=document.getElementById('contact-form'), n=document.getElementById('c-note'), b=document.getElementById('c-send');
-  f.addEventListener('submit',function(e){
-    e.preventDefault();
-    var email=document.getElementById('c-email').value.trim();
-    if(!/^[^\s@]+@[^\s@]+\.[a-z]{2,}$/i.test(email)){
-      n.textContent='Enter a valid email address so we can reply.'; n.style.color='#a32b43'; return;
-    }
-    b.disabled=true; b.textContent='Sending…';
-    setTimeout(function(){
-      b.disabled=false; b.textContent='Send message';
-      f.reset();
-      n.textContent='Thanks — we have your message and will reply within one business day.';
-      n.style.color='#226a45';
-    },700);
-  });
-})();
-</script>
+<script src="/js/contact.js"></script>
 </body>
 </html>

@@ -15,6 +15,51 @@
   var EMAIL_RE = /^[^\s@]+@[^\s@]+\.[a-z]{2,}$/i;
   var MIN = 10;
 
+  /* ------------------------------------------------- per-field errors -- */
+  /* Previously every problem surfaced in one alert above the form, which meant
+     scrolling to find out which box was wrong. Each field now owns its message
+     and aria-invalid, and focus moves to the first thing that needs attention. */
+  function setErr(input, id, msg) {
+    var el = document.getElementById(id);
+    if (!el) return;
+    if (msg) {
+      el.textContent = msg;
+      el.hidden = false;
+      if (input) input.setAttribute("aria-invalid", "true");
+    } else {
+      el.textContent = "";
+      el.hidden = true;
+      if (input) input.removeAttribute("aria-invalid");
+    }
+  }
+
+  function clearErrors() {
+    setErr(email, "email-err");
+    setErr(pw, "pw-err");
+    setErr(confirm, "confirm-err");
+    setErr(terms, "terms-err");
+  }
+
+  function pwChecks(v) {
+    return {
+      len: v.length >= MIN,
+      case: /[a-z]/.test(v) && /[A-Z]/.test(v),
+      num: /\d/.test(v),
+      sym: /[^\w\s]/.test(v),
+    };
+  }
+
+  function paintRequirements() {
+    var c = pwChecks(pw.value);
+    var items = document.querySelectorAll("#req-list li[data-req]");
+    for (var i = 0; i < items.length; i++) {
+      var key = items[i].getAttribute("data-req");
+      if (c[key]) items[i].setAttribute("data-ok", "1");
+      else items[i].removeAttribute("data-ok");
+    }
+  }
+  paintRequirements();
+
   // Already signed in? This page is reached from the pricing page's upgrade
   // buttons, so an existing customer should go straight to where they were
   // heading rather than be asked to register an account they already have.
@@ -44,24 +89,62 @@
 
   function clear() { alertBox.className = "alert"; }
 
-  function problems() {
-    var v = pw.value;
-    if (!EMAIL_RE.test(email.value.trim())) return "Enter a valid email address.";
-    if (v.length < MIN) return "Password must be at least " + MIN + " characters.";
-    if (!/[a-zA-Z]/.test(v) || !/\d/.test(v) || !/[^\w\s]/.test(v)) {
-      return "Mix letters with at least one number and one symbol.";
+  /* Validates everything, paints each field's own message, and reports the
+     first offending input so focus can go there. */
+  function validate() {
+    clearErrors();
+    var c = pwChecks(pw.value);
+    var first = null;
+
+    if (!EMAIL_RE.test(email.value.trim())) {
+      setErr(email, "email-err", "Enter a valid email address, for example you@company.com.");
+      if (!first) first = email;
+    } else {
+      setErr(email, "email-err");
     }
-    if (confirm.value !== v) return "Passwords do not match.";
-    if (!terms.checked) return "Please accept the terms and acceptable use policy.";
-    return null;
+
+    var missing = [];
+    if (!c.len) missing.push("10 or more characters");
+    if (!c.case) missing.push("upper and lower case");
+    if (!c.num) missing.push("a number");
+    if (!c.sym) missing.push("a symbol");
+    if (missing.length) {
+      setErr(pw, "pw-err", "Password still needs: " + missing.join(", ") + ".");
+      if (!first) first = pw;
+    } else {
+      setErr(pw, "pw-err");
+    }
+
+    if (!pw.value) {
+      setErr(pw, "pw-err", "Choose a password.");
+      if (!first) first = pw;
+    } else if (pw.value !== confirm.value) {
+      setErr(confirm, "confirm-err", "These passwords do not match.");
+      if (!first) first = confirm;
+    } else {
+      setErr(confirm, "confirm-err");
+    }
+
+    if (!terms.checked) {
+      setErr(terms, "terms-err", "Please accept the terms to continue.");
+      if (!first) first = terms;
+    } else {
+      setErr(terms, "terms-err");
+    }
+
+    return first;
   }
 
   form.addEventListener("submit", function (e) {
     e.preventDefault();
     clear();
 
-    var issue = problems();
-    if (issue) { say(issue, "error"); return; }
+    var bad = validate();
+    if (bad) {
+      say("Almost there — check the highlighted fields below.", "error");
+      bad.focus();
+      return;
+    }
 
     submit.disabled = true;
     submit.textContent = "Creating account…";
@@ -106,10 +189,49 @@
       });
   });
 
+  /* Live feedback while typing, but only after the field has been touched once —
+   shouting "invalid email" at someone who has not finished typing the first
+   character is the classic way to make a form feel hostile. */
+  function touched(el) { return el.dataset.touched === "1"; }
+
+  function revalidate(el) {
+    if (!touched(el)) return;
+    var v = el.value.trim();
+    if (el === email) {
+      setErr(email, "email-err", EMAIL_RE.test(v) ? "" : "Enter a valid email address, for example you@company.com.");
+    } else if (el === pw) {
+      var c = pwChecks(el.value);
+      var missing = [];
+      if (!c.len) missing.push("10 or more characters");
+      if (!c.case) missing.push("upper and lower case");
+      if (!c.num) missing.push("a number");
+      if (!c.sym) missing.push("a symbol");
+      setErr(pw, "pw-err", missing.length ? "Password still needs: " + missing.join(", ") + "." : "");
+    } else if (el === confirm) {
+      setErr(confirm, "confirm-err", el.value === pw.value ? "" : "These passwords do not match.");
+    }
+  }
+
   [email, pw, confirm].forEach(function (el) {
     el.addEventListener("input", function () {
-      el.removeAttribute("aria-invalid");
-      clear();
+      if (el === pw) {
+        paintRequirements();
+        revalidate(pw);
+        // Editing the password can invalidate a confirmation already typed.
+        if (touched(confirm)) revalidate(confirm);
+      } else {
+        revalidate(el);
+      }
     });
+    el.addEventListener("blur", function () {
+      el.dataset.touched = "1";
+      revalidate(el);
+    });
+  });
+
+  terms.addEventListener("change", function () {
+    if (touched(terms) || terms.checked) {
+      setErr(terms, "terms-err", terms.checked ? "" : "Please accept the terms to continue.");
+    }
   });
 })();

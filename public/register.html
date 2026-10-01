@@ -3,24 +3,31 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Create your account — Veriscope</title>
-<meta name="description" content="Create a free Veriscope account. 10 breach and stealer-log queries per day, no card required.">
+<title>Create your account — bugatti.lol</title>
+<meta name="description" content="Create a free bugatti.lol account. 10 breach and stealer-log queries per day, no card required.">
 <meta name="theme-color" content="#fbfaf8">
 <meta name="robots" content="noindex">
 <link rel="icon" href="/assets/favicon.svg" type="image/svg+xml">
+<script src="/js/theme-init.js"></script>
 <link rel="stylesheet" href="/css/site.css">
 </head>
 <body>
 <a class="skip" href="#main">Skip to content</a>
 
+<button class="theme-btn theme-float" id="theme-btn" type="button" aria-label="Switch to dark theme" title="Switch theme">
+    <svg class="i-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg>
+    <svg class="i-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4.2"/><path d="M12 2v2.4M12 19.6V22M2 12h2.4M19.6 12H22M4.9 4.9l1.7 1.7M17.4 17.4l1.7 1.7M19.1 4.9l-1.7 1.7M6.6 17.4l-1.7 1.7"/></svg>
+  </button>
+
 <div class="auth-wrap">
   <div class="auth-form-side">
     <main class="auth-form" id="main">
-      <a class="brand" href="/" style="margin-bottom:32px"><img src="/assets/logo.svg" width="28" height="28" alt=""> Veriscope</a>
+      <a class="brand" href="/" style="margin-bottom:34px"><img src="/assets/logo.svg" width="28" height="28" alt=""> bugatti.lol</a>
 
       <div class="auth-head">
+        <span class="badge-free">Free forever &middot; no card</span>
         <h1>Create your account</h1>
-        <p>Free tier gives you 10 queries a day. No card required.</p>
+        <p>Ten queries a day, across every source, straight away.</p>
       </div>
 
       <div class="alert" id="alert" role="alert" aria-live="polite">
@@ -34,46 +41,63 @@
           <div class="input-wrap">
             <input id="name" name="name" type="text" autocomplete="name" maxlength="80" placeholder="Ada Lovelace">
           </div>
+          <p class="f-err" id="name-err" hidden></p>
         </div>
 
         <div class="field">
           <label for="email">Work email</label>
           <div class="input-wrap has-icon">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m2 7 10 6 10-6"/></svg>
-            <input id="email" name="email" type="email" autocomplete="email" required placeholder="you@company.com">
+            <input id="email" name="email" type="email" autocomplete="email" required placeholder="you@company.com" aria-describedby="email-err">
           </div>
+          <p class="f-err" id="email-err" hidden></p>
         </div>
 
         <div class="field">
           <label for="pw">Password</label>
           <div class="input-wrap has-icon">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="10" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
-            <input id="pw" name="password" type="password" autocomplete="new-password" required placeholder="At least 10 characters">
+            <input id="pw" name="password" type="password" autocomplete="new-password" required placeholder="At least 10 characters" aria-describedby="pw-err">
             <button class="reveal" id="reveal" type="button" aria-label="Show password">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7-10-7-10-7z"/><circle cx="12" cy="12" r="3"/></svg>
             </button>
           </div>
           <div class="pw-meter" id="pw-meter" data-score="0" aria-hidden="true"><i></i><i></i><i></i><i></i></div>
-          <p class="hint">Strength: <span id="pw-label">—</span>. Mix letters with a number and a symbol.</p>
+          <p class="hint">Strength: <span id="pw-label">&mdash;</span></p>
+          <ul class="req-list" id="req-list">
+            <li data-req="len"><svg class="r-off" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/></svg><svg class="r-on" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg><span>10 or more characters</span></li>
+            <li data-req="case"><svg class="r-off" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/></svg><svg class="r-on" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg><span>Upper and lower case</span></li>
+            <li data-req="num"><svg class="r-off" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/></svg><svg class="r-on" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg><span>At least one number</span></li>
+            <li data-req="sym"><svg class="r-off" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/></svg><svg class="r-on" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg><span>At least one symbol</span></li>
+          </ul>
+          <p class="f-err" id="pw-err" hidden></p>
         </div>
 
         <div class="field">
           <label for="confirm">Confirm password</label>
           <div class="input-wrap has-icon">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m2 7 10 6 10-6"/></svg>
-            <input id="confirm" name="confirmPassword" type="password" autocomplete="new-password" required placeholder="Repeat your password">
+            <input id="confirm" name="confirmPassword" type="password" autocomplete="new-password" required placeholder="Repeat your password" aria-describedby="confirm-err">
           </div>
+          <p class="f-err" id="confirm-err" hidden></p>
         </div>
 
         <div class="field">
           <label class="checkbox">
-            <input type="checkbox" id="terms" required>
+            <input type="checkbox" id="terms" required aria-describedby="terms-err">
             <span>I have read and accept the <a href="/legal.html#terms" style="color:var(--accent-deep);font-weight:600">terms of service</a> and <a href="/legal.html#acceptable-use" style="color:var(--accent-deep);font-weight:600">acceptable use policy</a>.</span>
           </label>
+          <p class="f-err" id="terms-err" hidden></p>
         </div>
 
         <button class="btn btn-primary btn-block btn-lg" id="submit" type="submit">Create account</button>
       </form>
+
+      <ul class="auth-perks">
+        <li><b>10 queries a day</b><span>reset every day, no expiry</span></li>
+        <li><b>No card required</b><span>and no auto-renewing anything</span></li>
+        <li><b>Query text never stored</b><span>digest only, for rate limiting</span></li>
+      </ul>
 
       <p class="auth-switch">Already have an account? <a href="/login.html">Sign in</a></p>
     </main>

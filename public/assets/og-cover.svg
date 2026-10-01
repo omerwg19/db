@@ -1,4 +1,4 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 630" width="1200" height="630" role="img" aria-label="Veriscope">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 630" width="1200" height="630" role="img" aria-label="bugatti.lol">
   
   <defs>
     <linearGradient id="acc" x1="0" y1="0" x2="1" y2="1">
@@ -44,6 +44,6 @@
   <text x="88" y="452" font-family="Segoe UI, Arial, sans-serif" font-size="30" font-weight="400" fill="#6d6a66">Email, phone, username, IP, domain and Discord ID lookups.</text>
   <g transform="translate(88 500)">
     <rect width="248" height="52" rx="26" fill="#141312"/>
-    <text x="124" y="34" text-anchor="middle" font-family="Segoe UI, Arial, sans-serif" font-size="21" font-weight="600" fill="#fff">veriscope.app</text>
+    <text x="124" y="34" text-anchor="middle" font-family="Segoe UI, Arial, sans-serif" font-size="21" font-weight="600" fill="#fff">bugatti.lol</text>
   </g>
 </svg>

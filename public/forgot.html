@@ -3,18 +3,23 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Forgot password — Veriscope</title>
+<title>Forgot password â€” bugatti.lol</title>
 <meta name="robots" content="noindex">
 <meta name="theme-color" content="#fbfaf8">
 <link rel="icon" href="/assets/favicon.svg" type="image/svg+xml">
+<script src="/js/theme-init.js"></script>
 <link rel="stylesheet" href="/css/site.css">
 </head>
 <body>
+  <button class="theme-btn theme-float" id="theme-btn" type="button" aria-label="Switch to dark theme" title="Switch theme">
+    <svg class="i-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg>
+    <svg class="i-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4.2"/><path d="M12 2v2.4M12 19.6V22M2 12h2.4M19.6 12H22M4.9 4.9l1.7 1.7M17.4 17.4l1.7 1.7M19.1 4.9l-1.7 1.7M6.6 17.4l-1.7 1.7"/></svg>
+  </button>
 <a class="skip" href="#main">Skip to content</a>
 <div class="auth-wrap">
   <div class="auth-form-side">
     <main class="auth-form" id="main">
-      <a class="brand" href="/" style="margin-bottom:32px"><img src="/assets/logo.svg" width="28" height="28" alt=""> Veriscope</a>
+      <a class="brand" href="/" style="margin-bottom:32px"><img src="/assets/logo.svg" width="28" height="28" alt=""> bugatti.lol</a>
       <div class="auth-head">
         <h1>Reset your password</h1>
         <p>Enter the email on your account and we will send a reset link.</p>
@@ -49,28 +54,6 @@
   </aside>
 </div>
 <script src="/js/site.js"></script>
-<script>
-(function(){
-  var f=document.getElementById('form'),a=document.getElementById('alert'),t=document.getElementById('alert-text'),
-      s=document.getElementById('submit'),e=document.getElementById('email');
-  function say(m,k){t.textContent=m;a.className='alert on alert-'+(k||'error');}
-  f.addEventListener('submit',function(ev){
-    ev.preventDefault();
-    if(!/^[^\s@]+@[^\s@]+\.[a-z]{2,}$/i.test(e.value.trim())){say('Enter a valid email address.');return;}
-    s.disabled=true;s.textContent='Sending…';
-    fetch('/api/password/forgot',{method:'POST',credentials:'same-origin',
-      headers:{'Content-Type':'application/json'},body:JSON.stringify({email:e.value.trim()})})
-      .then(function(r){return r.json().then(function(d){return {ok:r.ok,data:d};});})
-      .then(function(res){
-        s.disabled=false;s.textContent='Send reset link';
-        if(!res.ok){say(res.data.error||'Could not send the link.');return;}
-        var msg='If that address has an account, a reset link is on its way. The link is valid for 60 minutes.';
-        if(res.data.devLink){msg+=' Development mode: '+res.data.devLink;}
-        say(msg,'ok');
-      })
-      .catch(function(){s.disabled=false;s.textContent='Send reset link';say('Network error. Try again.');});
-  });
-})();
-</script>
+<script src="/js/forgot.js"></script>
 </body>
 </html>

@@ -2,6 +2,67 @@
 (function () {
   "use strict";
 
+  /* ------------------------------------------------------------ theme ---- */
+  /* The attribute is already set by /js/theme-init.js before first paint; this
+     only wires the control. */
+  var THEME_KEY = "theme";
+  var themeBtn = document.getElementById("theme-btn");
+
+  function currentTheme() {
+    return document.documentElement.getAttribute("data-theme") === "dark" ? "dark" : "light";
+  }
+
+  function syncThemeBtn() {
+    if (!themeBtn) return;
+    var dark = currentTheme() === "dark";
+    themeBtn.setAttribute("aria-label", dark ? "Switch to light theme" : "Switch to dark theme");
+  }
+
+  function applyTheme(next) {
+    var root = document.documentElement;
+    // Cross-fade colours for the length of the switch, then drop the class so
+    // it cannot interfere with hover transitions later.
+    root.classList.add("theme-anim");
+    root.setAttribute("data-theme", next);
+    try {
+      localStorage.setItem(THEME_KEY, next);
+    } catch (e) {
+      // Storage unavailable: the theme still applies for this page view.
+    }
+    window.setTimeout(function () { root.classList.remove("theme-anim"); }, 260);
+    syncThemeBtn();
+    syncThemeColor(next);
+  }
+
+  // The browser chrome colour follows the theme; a stale value leaves a light
+  // strip above a dark page on mobile.
+  function syncThemeColor(theme) {
+    var meta = document.querySelector('meta[name="theme-color"]');
+    if (meta) meta.setAttribute("content", theme === "dark" ? "#0d0e11" : "#fbfaf8");
+  }
+
+  if (themeBtn) {
+    syncThemeBtn();
+    themeBtn.addEventListener("click", function () {
+      applyTheme(currentTheme() === "dark" ? "light" : "dark");
+    });
+  }
+
+  // Follow the OS only while the visitor has not made an explicit choice.
+  if (window.matchMedia) {
+    var mq = window.matchMedia("(prefers-color-scheme: dark)");
+    var onChange = function (e) {
+      var stored = null;
+      try { stored = localStorage.getItem(THEME_KEY); } catch (err) { /* ignore */ }
+      if (stored === "light" || stored === "dark") return;
+      document.documentElement.setAttribute("data-theme", e.matches ? "dark" : "light");
+      syncThemeColor(e.matches ? "dark" : "light");
+      syncThemeBtn();
+    };
+    if (mq.addEventListener) mq.addEventListener("change", onChange);
+    else if (mq.addListener) mq.addListener(onChange);
+  }
+
   /* ------------------------------------------------------------ nav ---- */
   var burger = document.getElementById("burger");
   var navlinks = document.getElementById("navlinks");
@@ -136,8 +197,10 @@
       document.body.appendChild(host);
     }
     host.textContent = msg;
-    host.style.background = kind === "error" ? "#a32b43" : "#141312";
-    host.style.color = "#fff";
+    // var() resolves against the live theme, so the toast stays legible when
+    // the page flips to dark while one is on screen.
+    host.style.background = kind === "error" ? "var(--danger-ink)" : "var(--inverse-bg)";
+    host.style.color = "var(--card)";
     requestAnimationFrame(function () {
       host.style.opacity = "1";
       host.style.transform = "translateX(-50%) translateY(0)";

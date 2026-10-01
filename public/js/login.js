@@ -9,11 +9,29 @@
   var email = document.getElementById("email");
   var pw = document.getElementById("pw");
 
+  function setErr(input, id, msg) {
+    var el = document.getElementById(id);
+    if (!el) return;
+    if (msg) {
+      el.textContent = msg;
+      el.hidden = false;
+      input.setAttribute("aria-invalid", "true");
+    } else {
+      el.textContent = "";
+      el.hidden = true;
+      input.removeAttribute("aria-invalid");
+    }
+  }
+
   function say(msg) {
     alertText.textContent = msg;
     alertBox.className = "alert on alert-error";
   }
-  function clear() { alertBox.className = "alert"; }
+  function clear() {
+    alertBox.className = "alert";
+    setErr(email, "email-err");
+    setErr(pw, "pw-err");
+  }
 
   // Where to go after a successful sign-in. `next` is only honoured when it is
   // a plain same-origin path, so the param cannot be used as an open redirect.
@@ -39,8 +57,24 @@
     e.preventDefault();
     clear();
 
-    if (!email.value.trim() || !pw.value) {
-      say("Email and password are required.");
+    /* Same per-field treatment as registration, so a missing box is obvious
+       without having to read the banner and work out which field it means. */
+    var bad = null;
+    if (!email.value.trim()) {
+      setErr(email, "email-err", "Enter the email you signed up with.");
+      bad = bad || email;
+    } else {
+      setErr(email, "email-err");
+    }
+    if (!pw.value) {
+      setErr(pw, "pw-err", "Enter your password.");
+      bad = bad || pw;
+    } else {
+      setErr(pw, "pw-err");
+    }
+    if (bad) {
+      say("Almost there — check the highlighted fields below.");
+      bad.focus();
       return;
     }
 

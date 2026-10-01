@@ -3,18 +3,23 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Choose a new password — Veriscope</title>
+<title>Choose a new password â€” bugatti.lol</title>
 <meta name="robots" content="noindex">
 <meta name="theme-color" content="#fbfaf8">
 <link rel="icon" href="/assets/favicon.svg" type="image/svg+xml">
+<script src="/js/theme-init.js"></script>
 <link rel="stylesheet" href="/css/site.css">
 </head>
 <body>
+  <button class="theme-btn theme-float" id="theme-btn" type="button" aria-label="Switch to dark theme" title="Switch theme">
+    <svg class="i-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg>
+    <svg class="i-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4.2"/><path d="M12 2v2.4M12 19.6V22M2 12h2.4M19.6 12H22M4.9 4.9l1.7 1.7M17.4 17.4l1.7 1.7M19.1 4.9l-1.7 1.7M6.6 17.4l-1.7 1.7"/></svg>
+  </button>
 <a class="skip" href="#main">Skip to content</a>
 <div class="auth-wrap">
   <div class="auth-form-side">
     <main class="auth-form" id="main">
-      <a class="brand" href="/" style="margin-bottom:32px"><img src="/assets/logo.svg" width="28" height="28" alt=""> Veriscope</a>
+      <a class="brand" href="/" style="margin-bottom:32px"><img src="/assets/logo.svg" width="28" height="28" alt=""> bugatti.lol</a>
       <div class="auth-head">
         <h1>Choose a new password</h1>
         <p>Setting a new password signs you out everywhere else.</p>
@@ -34,7 +39,7 @@
             </button>
           </div>
           <div class="pw-meter" id="pw-meter" data-score="0" aria-hidden="true"><i></i><i></i><i></i><i></i></div>
-          <p class="hint">Strength: <span id="pw-label">—</span>. Mix letters with a number and a symbol.</p>
+          <p class="hint">Strength: <span id="pw-label">â€”</span>. Mix letters with a number and a symbol.</p>
         </div>
         <div class="field">
           <label for="confirm">Confirm new password</label>
@@ -60,34 +65,6 @@
   </aside>
 </div>
 <script src="/js/site.js"></script>
-<script>
-(function(){
-  var token=new URLSearchParams(location.search).get('token');
-  var f=document.getElementById('form'),a=document.getElementById('alert'),t=document.getElementById('alert-text'),
-      s=document.getElementById('submit'),p=document.getElementById('pw'),c=document.getElementById('confirm');
-  function say(m,k){t.textContent=m;a.className='alert on alert-'+(k||'error');}
-  if(!token){
-    say('This link is missing its token. Request a new one.');
-    f.querySelectorAll('input,button').forEach(function(x){x.disabled=true;});
-    return;
-  }
-  f.addEventListener('submit',function(ev){
-    ev.preventDefault();
-    if(p.value.length<10){say('Password must be at least 10 characters.');return;}
-    if(!/[a-zA-Z]/.test(p.value)||!/\d/.test(p.value)||!/[^\w\s]/.test(p.value)){say('Mix letters with at least one number and one symbol.');return;}
-    if(p.value!==c.value){say('Passwords do not match.');return;}
-    s.disabled=true;s.textContent='Updating…';
-    fetch('/api/password/reset',{method:'POST',credentials:'same-origin',
-      headers:{'Content-Type':'application/json'},body:JSON.stringify({token:token,newPassword:p.value})})
-      .then(function(r){return r.json().then(function(d){return {ok:r.ok,data:d};});})
-      .then(function(res){
-        if(!res.ok){say(res.data.error||'Could not reset the password.');s.disabled=false;s.textContent='Update password';return;}
-        say('Password updated. You can now sign in.','ok');
-        setTimeout(function(){location.href='/login.html';},900);
-      })
-      .catch(function(){s.disabled=false;s.textContent='Update password';say('Network error. Try again.');});
-  });
-})();
-</script>
+<script src="/js/reset.js"></script>
 </body>
 </html>

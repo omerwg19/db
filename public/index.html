@@ -3,17 +3,18 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Veriscope — Correlated breach intelligence across 70+ sources</title>
-<meta name="description" content="Veriscope queries breach corpora, infostealer logs, social platforms and public registries in parallel, then correlates the hits into one picture of a subject's exposure.">
+<title>bugatti.lol â€” Correlated breach intelligence across 70+ sources</title>
+<meta name="description" content="bugatti.lol queries breach corpora, infostealer logs, social platforms and public registries in parallel, then correlates the hits into one picture of a subject's exposure.">
 <meta name="theme-color" content="#fbfaf8">
 <meta property="og:type" content="website">
-<meta property="og:site_name" content="Veriscope">
+<meta property="og:site_name" content="bugatti.lol">
 <meta property="og:title" content="Correlated breach intelligence across 70+ sources">
 <meta property="og:description" content="Email, phone, username, IP, domain and Discord ID lookups in one query.">
 <meta property="og:image" content="/img/og-cover.png">
 <meta name="twitter:card" content="summary_large_image">
 <link rel="icon" href="/assets/favicon.svg" type="image/svg+xml">
 <link rel="apple-touch-icon" href="/img/apple-touch-icon.png">
+<script src="/js/theme-init.js"></script>
 <link rel="stylesheet" href="/css/site.css">
 </head>
 <body>
@@ -21,7 +22,7 @@
 
 <header class="nav">
   <div class="wrap nav-in">
-    <a class="brand" href="/"><img src="/assets/logo.svg" width="28" height="28" alt=""> Veriscope</a>
+    <a class="brand" href="/"><img src="/assets/logo.svg" width="28" height="28" alt=""> bugatti.lol</a>
     <nav class="nav-links" id="navlinks" aria-label="Primary">
       <a href="/lookups.html">Lookups</a>
       <a href="/sources.html">Sources</a>
@@ -30,6 +31,10 @@
     </nav>
     <div class="nav-right">
       <span id="nav-user" class="nav-right" hidden></span>
+        <button class="theme-btn" id="theme-btn" type="button" aria-label="Switch to dark theme" title="Switch theme">
+          <svg class="i-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg>
+          <svg class="i-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4.2"/><path d="M12 2v2.4M12 19.6V22M2 12h2.4M19.6 12H22M4.9 4.9l1.7 1.7M17.4 17.4l1.7 1.7M19.1 4.9l-1.7 1.7M6.6 17.4l-1.7 1.7"/></svg>
+        </button>
       <button class="burger" id="burger" aria-label="Toggle menu" aria-expanded="false" aria-controls="navlinks"><i></i></button>
     </div>
   </div>
@@ -42,7 +47,7 @@
     <div class="hero-grid">
       <div>
         <h1>Find the breach before <em>someone else does.</em></h1>
-        <p class="lead">Veriscope searches breach corpora, infostealer logs, social platforms and public registries at once, then correlates the hits into a single picture of a subject's exposure.</p>
+        <p class="lead">bugatti.lol searches breach corpora, infostealer logs, social platforms and public registries at once, then correlates the hits into a single picture of a subject's exposure.</p>
         <div class="hero-cta">
           <a class="btn btn-primary btn-lg" href="/register.html">Create a free account</a>
           <a class="btn btn-ghost btn-lg" href="/sources.html">See the sources</a>
@@ -53,8 +58,81 @@
           <span class="pill"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg> Quota resets daily</span>
         </div>
       </div>
-      <figure class="hero-art">
-        <img src="/img/hero-convergence.png" width="1120" height="700" alt="Diagram of ten query sources converging on a single correlated result" fetchpriority="high">
+<figure class="hero-art">
+        <svg class="hero-viz" viewBox="0 0 600 452" role="img" aria-label="One identifier queried against four sources, converging into a single correlated subject with a confidence score and four matched fields">
+          <rect class="hv-card" x="4" y="4" width="592" height="444" rx="20"/>
+
+          <!-- the query -->
+          <rect class="hv-bar" x="28" y="28" width="544" height="46" rx="12"/>
+          <circle class="hv-stroke" cx="52" cy="51" r="7"/>
+          <path class="hv-stroke" d="m57 56 4.5 4.5"/>
+          <text class="hv-mono" x="72" y="56">ada.lovelace@example.com</text>
+          <rect class="hv-pill" x="486" y="38" width="72" height="26" rx="8"/>
+          <text class="hv-pill-txt" x="522" y="55">Search</text>
+
+          <!-- sources fanning in -->
+          <g>
+            <path class="hv-line" d="M300 74 C300 104 150 92 152 122"/>
+            <path class="hv-line" d="M300 74 C300 104 150 140 152 170"/>
+            <path class="hv-line" d="M300 74 C300 104 150 188 152 218"/>
+            <path class="hv-line" d="M300 74 C300 104 150 236 152 266"/>
+          </g>
+
+          <g>
+            <rect class="hv-chip" x="28" y="104" width="248" height="38" rx="10"/>
+            <circle class="hv-dot" cx="46" cy="123" r="4"/>
+            <text class="hv-txt" x="60" y="128">Breach corpora</text>
+            <text class="hv-count" x="258" y="128">28</text>
+          </g>
+          <g>
+            <rect class="hv-chip" x="28" y="152" width="248" height="38" rx="10"/>
+            <circle class="hv-dot" cx="46" cy="171" r="4"/>
+            <text class="hv-txt" x="60" y="176">Infostealer logs</text>
+            <text class="hv-count" x="258" y="176">11</text>
+          </g>
+          <g>
+            <rect class="hv-chip" x="28" y="200" width="248" height="38" rx="10"/>
+            <circle class="hv-dot" cx="46" cy="219" r="4"/>
+            <text class="hv-txt" x="60" y="224">Public registries</text>
+            <text class="hv-count" x="258" y="224">7</text>
+          </g>
+          <g>
+            <rect class="hv-chip" x="28" y="248" width="248" height="38" rx="10"/>
+            <circle class="hv-dot hv-dot-wait" cx="46" cy="267" r="4"/>
+            <text class="hv-txt" x="60" y="272">Social and web</text>
+            <text class="hv-count" x="258" y="272">24</text>
+          </g>
+
+          <path class="hv-line" d="M300 74 C300 104 448 92 448 122"/>
+
+          <!-- the correlated result -->
+          <rect class="hv-res" x="330" y="104" width="242" height="288" rx="14"/>
+          <text class="hv-eyebrow" x="352" y="132">CORRELATED SUBJECT</text>
+          <text class="hv-mono hv-strong" x="352" y="158">a_lovelace</text>
+
+          <text class="hv-mini" x="352" y="192">CONFIDENCE</text>
+          <text class="hv-score" x="550" y="194">94%</text>
+          <rect class="hv-meter-bg" x="352" y="204" width="198" height="7" rx="3.5"/>
+          <rect class="hv-meter-fill" x="352" y="204" width="186" height="7" rx="3.5"/>
+
+          <line class="hv-divider" x1="352" y1="230" x2="550" y2="230"/>
+
+          <text class="hv-mini" x="352" y="254">MATCHED FIELDS</text>
+          <g><rect class="hv-field" x="352" y="264" width="94" height="26" rx="7"/><text class="hv-field-txt" x="366" y="281">email</text></g>
+          <g><rect class="hv-field" x="454" y="264" width="96" height="26" rx="7"/><text class="hv-field-txt" x="468" y="281">phone</text></g>
+          <g><rect class="hv-field" x="352" y="298" width="104" height="26" rx="7"/><text class="hv-field-txt" x="366" y="315">username</text></g>
+          <g><rect class="hv-field" x="464" y="298" width="86" height="26" rx="7"/><text class="hv-field-txt" x="478" y="315">IP</text></g>
+
+          <line class="hv-divider" x1="352" y1="344" x2="550" y2="344"/>
+          <text class="hv-mini" x="352" y="370">FIRST SEEN</text>
+          <text class="hv-txt hv-strong" x="550" y="370" text-anchor="end">March 2019</text>
+
+          <!-- footer strip -->
+          <line class="hv-divider" x1="28" y1="404" x2="572" y2="404"/>
+          <circle class="hv-dot" cx="38" cy="424" r="4"/>
+          <text class="hv-mini" x="50" y="428">70 / 70 SOURCES QUERIED IN 3.1s</text>
+          <text class="hv-mini" x="572" y="428" text-anchor="end">DEMO DATA</text>
+        </svg>
         <figcaption>Sources queried in parallel, results normalised and deduplicated by field</figcaption>
       </figure>
     </div>
@@ -102,7 +180,7 @@
     <div class="sec-head rv">
       <p class="eyebrow">Supported lookups</p>
       <h2>One query, every identifier</h2>
-      <p class="lead">Paste any identifier and Veriscope works out what it is, then fans the request out across every source that has ever indexed it.</p>
+      <p class="lead">Paste any identifier and bugatti.lol works out what it is, then fans the request out across every source that has ever indexed it.</p>
     </div>
     <div class="lookup-grid rv">
       <article class="lcard">
@@ -214,7 +292,7 @@
     <div class="sourcedemo rv">
       <div class="logline">
         <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="#3f9e6a" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
-        <span>Last poll completed <b>70/70 sources</b> in 3.1s — median across the last hour</span>
+        <span>Last poll completed <b>70/70 sources</b> in 3.1s â€” median across the last hour</span>
       </div>
     </div>
   </div>
@@ -289,7 +367,7 @@
   <div class="wrap">
     <div class="foot-top">
       <div class="foot-brand">
-        <a class="brand" href="/"><img src="/assets/logo.svg" width="28" height="28" alt=""> Veriscope</a>
+        <a class="brand" href="/"><img src="/assets/logo.svg" width="28" height="28" alt=""> bugatti.lol</a>
         <p>Correlated intelligence search across breach, stealer and public sources.</p>
       </div>
       <div class="foot-nav">
@@ -321,9 +399,9 @@
         </div>
       </div>
     </div>
-    <p class="legal-note"><b>Responsible use.</b> Veriscope surfaces material that is already publicly available, and having a record indexed somewhere does not make it yours to use. Only query subjects you own or have documented authorisation to investigate. We do not support doxxing, stalking, harassment or identity theft, and we terminate access for misuse without refund.</p>
+    <p class="legal-note"><b>Responsible use.</b> bugatti.lol surfaces material that is already publicly available, and having a record indexed somewhere does not make it yours to use. Only query subjects you own or have documented authorisation to investigate. We do not support doxxing, stalking, harassment or identity theft, and we terminate access for misuse without refund.</p>
     <div class="foot-bot">
-      <span>&copy; 2026 Veriscope</span>
+      <span>&copy; 2026 bugatti.lol</span>
       <span>All product names and marks are property of their respective owners.</span>
     </div>
   </div>

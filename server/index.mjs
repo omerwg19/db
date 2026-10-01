@@ -451,7 +451,7 @@ async function handleApi(req, res, url) {
     const verify = auth.issueToken(user.id, "email_verify", VERIFY_TTL_MS);
     void sendMail({
       to: user.email,
-      subject: "Confirm your Veriscope email",
+      subject: "Confirm your bugatti.lol email",
       text: `Confirm your address: ${PUBLIC_ORIGIN}/verify.html?token=${verify}`,
     });
 
@@ -546,7 +546,7 @@ async function handleApi(req, res, url) {
     auth.log("password.reset_requested", { userId: row.id, email, ip });
     const sent = await sendMail({
       to: email,
-      subject: "Reset your Veriscope password",
+      subject: "Reset your bugatti.lol password",
       text: `Reset your password (valid 60 minutes): ${PUBLIC_ORIGIN}/reset.html?token=${token}\nIf you did not request this, ignore this email.`,
     });
     return json(res, 200, sent.delivered ? generic : { ...generic, devLink: `${PUBLIC_ORIGIN}/reset.html?token=${token}` });
@@ -595,7 +595,7 @@ async function handleApi(req, res, url) {
     const link = auth.issueToken(found.user.id, "email_verify", VERIFY_TTL_MS);
     await sendMail({
       to: found.user.email,
-      subject: "Confirm your Veriscope email",
+      subject: "Confirm your bugatti.lol email",
       text: `Confirm your address: ${PUBLIC_ORIGIN}/verify.html?token=${link}`,
     });
     return json(res, 200, { ok: true });
@@ -771,7 +771,7 @@ const server = createServer(async (req, res) => {
 });
 
 server.listen(PORT, HOST, () => {
-  console.log(`Veriscope running at http://${HOST}:${PORT}`);
+  console.log(`bugatti.lol running at http://${HOST}:${PORT}`);
   console.log(`Database: ${process.env.DB_PATH || join(root, "data", "veriscope.db")}`);
   console.log(
     `Config: public_origin=${PUBLIC_ORIGIN} secure_cookies=${SECURE_COOKIES} ` +

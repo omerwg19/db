@@ -116,7 +116,7 @@ export async function createCheckout({ user, plan, origin, ip }) {
     price_amount: spec.amountUsd,
     price_currency: "usd",
     order_id: `p${user.id}`,
-    order_description: `Veriscope ${price.label} - ${price.periodDays} days`,
+    order_description: `bugatti.lol ${price.label} - ${price.periodDays} days`,
     ipn_callback_url: `${origin}/api/billing/webhook`,
     success_url: `${origin}/dashboard.html?paid=1`,
     cancel_url: `${origin}/pricing.html`,
