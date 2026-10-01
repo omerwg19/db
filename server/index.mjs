@@ -249,6 +249,25 @@ async function handleApi(req, res, url) {
     }
   }
 
+  /* ---- liveness / readiness ---- */
+  // Unauthenticated on purpose so a platform health check can reach it.
+  if (route === "GET /api/health" || route === "GET /healthz") {
+    let db = "ok";
+    try {
+      auth.db.prepare("SELECT 1").get();
+    } catch {
+      db = "error";
+    }
+    const body = {
+      ok: db === "ok",
+      db,
+      uptime_s: Math.round(process.uptime()),
+      node: process.version,
+      db_path: process.env.DB_PATH || join(root, "data", "veriscope.db"),
+    };
+    return json(res, db === "ok" ? 200 : 503, body);
+  }
+
   /* ---- session introspection (used by the SPA-ish nav) ---- */
   if (route === "GET /api/me") {
     const found = auth.getSessionUser(token);
@@ -598,8 +617,11 @@ const server = createServer(async (req, res) => {
   });
 
   try {
-    if (url.pathname.startsWith("/api/")) await handleApi(req, res, url);
-    else await serveStatic(res, url);
+    if (url.pathname.startsWith("/api/") || url.pathname === "/healthz") {
+      await handleApi(req, res, url);
+    } else {
+      await serveStatic(res, url);
+    }
   } catch (err) {
     if (err?.code === "too_large") return json(res, 413, { error: "Request too large." });
     if (err?.code === "bad_json") return json(res, 400, { error: "Malformed request." });
