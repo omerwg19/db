@@ -312,7 +312,7 @@ async function handleApi(req, res, url) {
       const rowId = auth.createPayment({
         userId: s.user.id,
         provider: "nowpayments",
-        providerRef: invoice.paymentId,
+        providerRef: invoice.providerRef,
         invoiceRef: invoice.orderId,
         plan,
         amountUsd: invoice.priceAmount,
@@ -321,9 +321,16 @@ async function handleApi(req, res, url) {
       if (!rowId) return json(res, 409, { error: "That invoice is already open." });
       auth.log("billing.checkout", {
         userId: s.user.id,
-        detail: `${plan} ${invoice.paymentId}`,
+        detail: `${plan} ${invoice.providerRef}`,
       });
-      return json(res, 200, invoice);
+      return json(res, 200, {
+        paymentUrl: invoice.paymentUrl,
+        payAmount: invoice.payAmount,
+        payCurrency: invoice.payCurrency,
+        multiCurrency: invoice.multiCurrency,
+        priceAmount: invoice.priceAmount,
+        periodDays: invoice.periodDays,
+      });
     } catch {
       auth.log("billing.checkout.failed", { userId: s.user.id, detail: plan });
       return json(res, 502, { error: "Checkout is unavailable right now. Try again shortly." });
@@ -346,8 +353,12 @@ async function handleApi(req, res, url) {
       return json(res, 401, { error: "Bad signature." });
     }
 
-    const ref = String(body.payment_id ?? "");
-    const row = auth.getPaymentByRef(ref);
+    // An invoice callback reports payment_id for the underlying deposit, while our
+    // row is keyed on the invoice id. Try both so the same handler works either
+    // way; the direct-payment fallback stores payment_id itself.
+    const row =
+      auth.getPaymentByRef(String(body.invoice_id ?? "")) ??
+      auth.getPaymentByRef(String(body.payment_id ?? ""));
     if (!row) return json(res, 200, { ok: true, ignored: true });
 
     const status = String(body.payment_status ?? "");
@@ -359,7 +370,8 @@ async function handleApi(req, res, url) {
 
     json(res, 200, { ok: true });
     try {
-      const remote = await confirmPayment(ref);
+      // Confirm the deposit itself, never the invoice id: that is not a payment.
+      const remote = await confirmPayment(String(body.payment_id ?? ""));
       const paid = Number(remote.actually_paid ?? 0);
       // Underpayment must never upgrade the account.
       if (remote.payment_status !== "finished" || paid + 1e-8 < row.amount_usd) {
@@ -371,7 +383,10 @@ async function handleApi(req, res, url) {
       }
       auth.applyPayment(row.id, { crypto: remote.pay_currency, status, raw: remote });
     } catch {
-      auth.log("billing.webhook.confirm_failed", { userId: row.user_id, detail: ref });
+      auth.log("billing.webhook.confirm_failed", {
+        userId: row.user_id,
+        detail: String(body.payment_id ?? ""),
+      });
     }
     return;
   }

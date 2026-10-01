@@ -67,6 +67,13 @@
         } else {
           pay.textContent = "Pay " + money(spec.amountUsd) + " now";
         }
+        // Reflects whether the provider lets the buyer choose the coin.
+        var note = $("sub-note");
+        if (note) {
+          note.textContent = state.multi
+            ? "You choose the coin on the next screen \u2014 BTC, ETH, SOL, USDT and others. We receive the same $10 either way."
+            : "Access is granted automatically once the payment is confirmed.";
+        }
         if (new URLSearchParams(location.search).get("paid")) {
           say("Payment received. Your Pro access is active.", "ok");
         }
@@ -98,7 +105,9 @@
           pay.textContent = "Try again";
           return;
         }
+        state.multi = true;
         // Hosted checkout: the processor owns the payment UI from here.
+        if (res.data.multiCurrency === false) state.multi = false;
         location.assign(res.data.paymentUrl);
       })
       .catch(function () {

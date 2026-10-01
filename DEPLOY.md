@@ -71,7 +71,7 @@ disabled and no payment can be taken — the app never fakes a paid state.
 |---|---|
 | `NOWPAYMENTS_API_KEY` | API key from the NOWPayments dashboard |
 | `NOWPAYMENTS_IPN_SECRET` | the IPN/callback secret from the same dashboard |
-| `CRYPTO_PAY_CURRENCY` | coin shown at checkout, e.g. `btc`, `eth`, `usdt` (default `btc`) |
+| `CRYPTO_PAY_CURRENCY` | optional — leave unset so the buyer chooses their coin |
 | `NOWPAYMENTS_SANDBOX` | `1` to use the sandbox API while testing |
 
 Then add the callback URL in the NOWPayments dashboard:
@@ -86,11 +86,19 @@ sandbox payment land and the account upgrade on its own.
 
 How it behaves:
 
-- Checkout creates the invoice server-side at a fixed $10; the amount is never
-  read from the browser.
-- The webhook verifies NOWPayments' HMAC signature, then re-reads the payment
-  from their API before upgrading. A callback that cannot be confirmed leaves
-  the account on Free.
+- Checkout creates an **invoice**, not a fixed deposit address, so the buyer
+  picks their own coin (BTC, ETH, SOL, USDT and the rest) on the provider's
+  page. Set `CRYPTO_PAY_CURRENCY=btc` to pin one coin instead — which is also
+  what the direct-payment fallback uses if invoices are unavailable.
+- Payout wallets (where the money lands) are separate and set in
+  `Settings → Payments → Payout wallets`.
+- The checkout amount is settled server-side at a fixed $10; it is never read
+  from the browser.
+- The webhook verifies NOWPayments' HMAC signature from the `x-nowpayments-sig`
+  header, then re-reads the payment from their API before upgrading. A callback
+  that cannot be confirmed leaves the account on Free.
+- An invoice callback reports the underlying deposit's `payment_id` while our
+  row is keyed on the invoice id, so the handler matches on either.
 - `provider_ref` is unique, so a redelivered webhook cannot grant a second
   period.
 - Access is a prepaid window: `users.plan_expires_at` is compared at read

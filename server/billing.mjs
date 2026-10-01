@@ -71,41 +71,58 @@ export async function confirmPayment(paymentId) {
   return api(`/payment/${encodeURIComponent(paymentId)}`);
 }
 
+// An invoice is used rather than a direct payment because /v1/invoice treats
+// pay_currency as optional: omit it and the hosted page lets the buyer choose
+// their own coin. /v1/payment always fixes one currency and one deposit
+// address. CRYPTO_PAY_CURRENCY pins the currency instead, which is also what
+// the /payment fallback below needs.
 export async function createCheckout({ user, plan, origin, ip }) {
   const spec = CHECKOUT_PLANS[plan];
   if (!spec) throw new Error("Unknown plan");
   const price = PLANS[plan];
-  const payCurrency = String(process.env.CRYPTO_PAY_CURRENCY ?? "btc").trim() || "btc";
+  const pinned = String(process.env.CRYPTO_PAY_CURRENCY ?? "").trim();
 
-  const invoice = await api("/payment", {
-    method: "POST",
-    body: JSON.stringify({
-      price_amount: spec.amountUsd,
-      price_currency: "usd",
-      pay_currency: payCurrency,
-      // Our own payment row id is the link between callback and account.
-      order_id: `p${user.id}`,
-      order_description: `Veriscope ${price.label} - ${price.periodDays} days`,
-      // Set per-request as well as in the dashboard. One of the two is always
-      // enough, which means a callback URL forgotten in the provider UI still
-      // delivers webhooks instead of silently losing paid orders.
-      ipn_callback_url: `${origin}/api/billing/webhook`,
-      ipn_allowed_updates: ["waiting", "confirming", "confirmed", "finished", "failed", "refunded", "expired"],
-      ipn_checkout_url: `${origin}/checkout.html`,
-      ip_address: ip && ip.includes(".") ? ip : undefined,
-      success_url: `${origin}/dashboard.html?paid=1`,
-      cancel_url: `${origin}/pricing.html`,
-    }),
-  });
+  const body = {
+    price_amount: spec.amountUsd,
+    price_currency: "usd",
+    order_id: `p${user.id}`,
+    order_description: `Veriscope ${price.label} - ${price.periodDays} days`,
+    ipn_callback_url: `${origin}/api/billing/webhook`,
+    ipn_allowed_updates: ["waiting", "confirming", "confirmed", "finished", "failed", "refunded", "expired"],
+    ipn_checkout_url: `${origin}/checkout.html`,
+    ip_address: ip && ip.includes(".") ? ip : undefined,
+    success_url: `${origin}/dashboard.html?paid=1`,
+    cancel_url: `${origin}/pricing.html`,
+    // Undefined is dropped during JSON.stringify, which is what leaves the
+    // choice with the buyer.
+    pay_currency: pinned || undefined,
+  };
 
+  let invoice;
+  let isInvoice = true;
+  try {
+    invoice = await api("/invoice", { method: "POST", body: JSON.stringify(body) });
+  } catch (err) {
+    // Not every account has the invoice endpoint enabled. Fall back to a direct
+    // payment, which requires a currency to be pinned.
+    if (!pinned) throw err;
+    isInvoice = false;
+    invoice = await api("/payment", { method: "POST", body: JSON.stringify(body) });
+  }
+
+  // The webhook has to find its way back to this purchase. An invoice callback
+  // carries payment_id for the underlying deposit, so match on whichever
+  // identifier we stored.
+  const providerRef = isInvoice ? String(invoice.id) : String(invoice.payment_id);
   return {
-    paymentId: String(invoice.payment_id),
-    paymentUrl: invoice.payment_url,
+    providerRef,
+    paymentUrl: isInvoice ? invoice.invoice_url : invoice.payment_url,
     payAmount: invoice.pay_amount,
-    payCurrency: invoice.pay_currency ?? payCurrency,
+    payCurrency: invoice.pay_currency ?? pinned ?? "customer choice",
     priceAmount: spec.amountUsd,
     priceCurrency: "usd",
     orderId: String(invoice.order_id ?? `p${user.id}`),
     periodDays: price.periodDays,
+    multiCurrency: !pinned,
   };
 }
