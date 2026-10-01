@@ -117,8 +117,8 @@ Database: /home/node/data/veriscope.db (on the persistent volume)
 ```
 
 A boot log that warns `the store is empty (0 accounts, 0 payments)` on an
-established site means the last deploy reset it. Back the volume up with
-`deploy/backup.sh` before you need it.
+established site means the last deploy reset it. Section 5 is how you stop that
+from costing you anything.
 
 ### 3b. Crypto payments (optional)
 
@@ -184,9 +184,94 @@ curl -I https://your-domain.com
 
 ### 5. Backups
 
-Hyperlift's volume is the database. Snapshot it on a schedule with
-`deploy/backup.sh` run from your own machine, or export the volume before any
-large migration.
+Do not trust the volume. On this account a push wipes `/home/node`, and
+`deploy/backup.sh` only helps if you can still reach the volume afterwards.
+Copy the store somewhere that outlives the build and the app puts itself back on
+the next boot.
+
+Set these in Hyperlift's environment variables, then redeploy once:
+
+| Variable | Required | Meaning |
+| --- | --- | --- |
+| `BACKUP_URL` | yes | Base URL that accepts `PUT` and `GET`, e.g. `https://veriscope-backup.example.workers.dev` |
+| `BACKUP_KEY` | yes | Passphrase. The database is encrypted with it, and backups are refused without it |
+| `BACKUP_TOKEN` | no | Bearer token for `BACKUP_KIND=http` |
+| `BACKUP_KIND` | no | `http` (default) or `s3` |
+| `BACKUP_INTERVAL_SECONDS` | no | Safety-net interval, default `60` |
+| `BACKUP_DEBOUNCE_SECONDS` | no | Delay before a write is pushed out, default `3` |
+
+Then confirm it works. A write should appear in the log within seconds:
+
+```
+backup: after write -> veriscope-74ced551-...-2026-09-30T11-52-18-367Z.vdb (84 KiB, 27 ms)
+```
+
+Wipe the volume and reboot: the account should come back on its own.
+
+```
+backup: restored veriscope-74ced551-...-2026-09-30T11-52-18-367Z.vdb (store_id 74ced551-...)
+rows: 1 user(s), 1 session(s), 0 payment(s)
+```
+
+Two deliberate behaviours worth knowing:
+
+- **A store with accounts is never overwritten.** If the boot finds data it
+  leaves it alone, so a stale backup cannot replace a healthy database. Only an
+  empty or unreadable one is restored.
+- **The backup is encrypted** with `BACKUP_KEY` using AES-256-GCM. That key is
+  the only way back: lose it and the backups are unreadable. It holds password
+  hashes and live session tokens, which is why there is no unencrypted mode.
+
+#### Option 1: a small worker (free, easiest)
+
+Any endpoint that stores what you `PUT` works. A Cloudflare Worker with an R2
+bucket behind it is the shortest version:
+
+```js
+export default {
+  async fetch(req, env) {
+    if (req.headers.get("authorization") !== `Bearer ${env.TOKEN}`)
+      return new Response("no", { status: 401 });
+
+    const key = new URL(req.url).pathname.replace(/^\//, "");
+    if (!/^[A-Za-z0-9._-]+$/.test(key)) return new Response("bad key", { status: 400 });
+
+    if (req.method === "PUT") {
+      await env.BUCKET.put(key, req.body);
+      return new Response(null, { status: 201 });
+    }
+    const object = await env.BUCKET.get(key);
+    if (!object) return new Response("missing", { status: 404 });
+    return new Response(object.body, { headers: { "content-type": "application/octet-stream" } });
+  },
+};
+```
+
+Bind an R2 bucket to it, then set `BACKUP_URL` to the worker URL and
+`BACKUP_TOKEN` to the same value as `TOKEN`.
+
+#### Option 2: an S3-compatible bucket (R2, B2, MinIO)
+
+Skips the worker and talks to the bucket directly with a hand-rolled SigV4
+signer, so there is no dependency to install.
+
+| Variable | Value |
+| --- | --- |
+| `BACKUP_KIND` | `s3` |
+| `BACKUP_URL` | `https://<account-id>.r2.cloudflarestorage.com` |
+| `BACKUP_BUCKET` | bucket name |
+| `BACKUP_REGION` | `auto` for R2, or the bucket region |
+| `BACKUP_ACCESS_KEY_ID` / `BACKUP_SECRET_ACCESS_KEY` | R2 API token credentials |
+
+R2's free tier covers this comfortably: the whole site is well under a megabyte,
+and each rebuild writes one small object.
+
+#### Retention
+
+One object per write, named after the store and the timestamp, with a `latest`
+pointer written last so an interrupted upload can never be pointed at. Nothing
+prunes old objects, so add a bucket lifecycle rule (R2: expire objects after 30
+days) if you do not want them accumulating.
 
 ---
 

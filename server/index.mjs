@@ -6,6 +6,7 @@ import { join, dirname, extname, normalize } from "node:path";
 import { createHash } from "node:crypto";
 import { fileURLToPath } from "node:url";
 import { Auth, PLANS, CHECKOUT_PLANS } from "./auth.mjs";
+import { createBackup, restoreIfEmpty, backupStatus } from "./backup.mjs";
 import {
   billingConfigured,
   verifyIpnSignature,
@@ -43,7 +44,17 @@ const VERIFY_TTL_MS = 1000 * 60 * 60 * 24;
 const PUBLIC_ORIGIN = env("PUBLIC_ORIGIN", `http://${HOST}:${PORT}`).replace(/\/+$/, "");
 const MAIL_WEBHOOK = env("MAIL_WEBHOOK");
 
+// Hyperlift rebuilds the container on every push and discards /home/node with
+// it, so on this account the database does not outlive a deploy. If backups are
+// configured, pull the last one back before anything opens the database: doing
+// it here means a wiped volume is repaired before the first request rather than
+// noticed later. A store that still has accounts is left untouched.
+const DB_FILE = env("DB_PATH", join(root, "data", "veriscope.db"));
+await restoreIfEmpty(DB_FILE);
+
 const auth = new Auth();
+const backup = createBackup();
+backup.attach(auth);
 auth.purgeExpired();
 auth.purgeOldAudit();
 auth.purgeOldQueries();
@@ -867,6 +878,15 @@ const server = createServer(async (req, res) => {
   }
 });
 
+// A successful write to the API means the uploaded snapshot is now stale. Note
+// it centrally so no individual handler has to remember to.
+server.on("request", (req, res) => {
+  if (req.method === "GET" || !req.url?.startsWith("/api/")) return;
+  res.on("finish", () => {
+    if (res.statusCode >= 200 && res.statusCode < 400) backup.markDirty();
+  });
+});
+
 server.listen(PORT, HOST, () => {
   console.log(`bugatti.lol running at http://${HOST}:${PORT}`);
   const store = auth.storeStats();
@@ -879,6 +899,13 @@ server.listen(PORT, HOST, () => {
   );
   if (store.bytes !== null) console.log(`  size: ${store.bytes} bytes (including WAL)`);
   console.log(`  store_id: ${store.storeId} (created ${store.storeCreated})`);
+  if (backup.enabled) {
+    console.log(
+      `  backup: enabled -> ${backupStatus().url} every ${env("BACKUP_INTERVAL_SECONDS", "60")}s, encrypted`
+    );
+  } else if (backup.reasons.length) {
+    console.warn(`  backup: off (${backup.reasons.join("; ")})`);
+  }
   if (store.empty) {
     // This is the signature of a volume that was recreated by a deploy. It also
     // describes a brand new install, so it is a prompt to check store_id rather

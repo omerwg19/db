@@ -1,8 +1,13 @@
 # Veriscope — container image.
 #
 # Works on Spaceship Hyperlift and any Docker host. Three rules matter:
-#   1. The persistent volume is mounted at /home/node, so all mutable state
-#      (the SQLite database) must live under it. App code goes in /app.
+#   1. /home/node is where Hyperlift mounts what it calls a persistent volume,
+#      and the database therefore lives at /home/node/data/veriscope.db. Do not
+#      assume that volume survives a rebuild: on this account a push discarded
+#      it and took every account with it, while the path stayed correct and
+#      health stayed green. Configure BACKUP_URL and BACKUP_KEY (DEPLOY.md
+#      section 5) so the store is restored on the next boot. App code goes in
+#      /app regardless.
 #   2. Hyperlift's default application port is 8080, configured through the
 #      environment rather than EXPOSE. Platform-injected PORT wins over this.
 #   3. Keep the layer count low. The builder snapshots the whole filesystem per
