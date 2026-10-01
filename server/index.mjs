@@ -331,9 +331,21 @@ async function handleApi(req, res, url) {
         priceAmount: invoice.priceAmount,
         periodDays: invoice.periodDays,
       });
-    } catch {
-      auth.log("billing.checkout.failed", { userId: s.user.id, detail: plan });
-      return json(res, 502, { error: "Checkout is unavailable right now. Try again shortly." });
+    } catch (err) {
+      // Log the provider's own complaint. A generic "unavailable" here costs a
+      // full round trip to diagnose, because nothing else records why.
+      auth.log("billing.checkout.failed", {
+        userId: s.user.id,
+        detail: `${plan}: ${String(err.message ?? err).slice(0, 300)}`,
+      });
+      console.error(`[billing] checkout failed for user ${s.user.id}: ${err.message ?? err}`);
+      // Safe to show the merchant their own provider's message; it contains no
+      // credentials and naming the bad field saves an hour of guessing.
+      const hint = err.provider ? String(err.message).slice(0, 160) : "";
+      return json(res, 502, {
+        error: "Checkout is unavailable right now. Try again shortly.",
+        detail: hint || undefined,
+      });
     }
   }
 

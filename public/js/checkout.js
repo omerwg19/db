@@ -99,7 +99,10 @@
       })
       .then(function (res) {
         if (!res.ok) {
-          say(res.data.error || "Could not start checkout.");
+          // Provider failures now carry a detail string; show it rather than
+          // making the customer guess.
+          say((res.data.error || "Could not start checkout.") +
+              (res.data.detail ? " (" + res.data.detail + ")" : ""));
           state.busy = false;
           pay.disabled = false;
           pay.textContent = "Try again";

@@ -58,9 +58,15 @@ async function api(path, init = {}) {
   try {
     body = JSON.parse(text);
   } catch {
-    throw new Error(`Payment provider returned ${res.status}`);
+    throw new Error(`Payment provider returned ${res.status} with an unreadable body`);
   }
-  if (!res.ok) throw new Error(body?.error?.message || `Payment provider returned ${res.status}`);
+  if (!res.ok) {
+    // Surface the reason instead of a bare status. This used to collapse every
+    // failure into one generic message, which made a rejected request body
+    // indistinguishable from an unreachable network.
+    const reason = body?.error?.message || body?.message || `status ${res.status}`;
+    throw Object.assign(new Error(reason), { status: res.status, provider: true });
+  }
   return body;
 }
 
@@ -82,15 +88,16 @@ export async function createCheckout({ user, plan, origin, ip }) {
   const price = PLANS[plan];
   const pinned = String(process.env.CRYPTO_PAY_CURRENCY ?? "").trim();
 
+  // Only the parameters /v1/invoice actually accepts. /v1/payment documents a
+  // wider set -- ipn_allowed_updates, ipn_checkout_url and ip_address among
+  // them -- and sending those to this endpoint makes the whole request fail
+  // with an opaque error, which is how a perfectly good key looks broken.
   const body = {
     price_amount: spec.amountUsd,
     price_currency: "usd",
     order_id: `p${user.id}`,
     order_description: `Veriscope ${price.label} - ${price.periodDays} days`,
     ipn_callback_url: `${origin}/api/billing/webhook`,
-    ipn_allowed_updates: ["waiting", "confirming", "confirmed", "finished", "failed", "refunded", "expired"],
-    ipn_checkout_url: `${origin}/checkout.html`,
-    ip_address: ip && ip.includes(".") ? ip : undefined,
     success_url: `${origin}/dashboard.html?paid=1`,
     cancel_url: `${origin}/pricing.html`,
     // Undefined is dropped during JSON.stringify, which is what leaves the
