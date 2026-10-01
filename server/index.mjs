@@ -603,4 +603,9 @@ const server = createServer(async (req, res) => {
 server.listen(PORT, HOST, () => {
   console.log(`Veriscope running at http://${HOST}:${PORT}`);
   console.log(`Database: ${process.env.DB_PATH || join(root, "data", "veriscope.db")}`);
+  console.log(
+    `Config: public_origin=${PUBLIC_ORIGIN} secure_cookies=${SECURE_COOKIES} ` +
+      `mail_webhook=${MAIL_WEBHOOK ? "set" : "unset (links go to logs)"} ` +
+      `pepper=${process.env.QUERY_DIGEST_PEPPER ? "set" : "MISSING (random per process)"}`
+  );
 });

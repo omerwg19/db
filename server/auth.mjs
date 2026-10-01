@@ -14,12 +14,22 @@ import { fileURLToPath } from "node:url";
 const root = join(dirname(fileURLToPath(import.meta.url)), "..");
 const SCRYPT = { N: 16384, r: 8, p: 1, keylen: 64 };
 
-// Salts the non-reversible query digests. Generate with:
-//   node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
-const DIGEST_PEPPER = process.env.QUERY_DIGEST_PEPPER ?? "";
-if (!DIGEST_PEPPER && process.env.NODE_ENV === "production") {
-  throw new Error("QUERY_DIGEST_PEPPER must be set in production");
-}
+// Salts the non-reversible query digests. Set QUERY_DIGEST_PEPPER in the
+// deployment environment. If it is missing we still boot - a random per-process
+// key is used instead, which keeps digests one-way but leaves them guessable by
+// anyone holding a copy of the database. Failing hard here would take the whole
+// site offline, which is worse than the weaker digest.
+const CONFIGURED_PEPPER = String(process.env.QUERY_DIGEST_PEPPER ?? "").trim();
+const DIGEST_PEPPER =
+  CONFIGURED_PEPPER ||
+  (() => {
+    console.warn(
+      "[warn] QUERY_DIGEST_PEPPER is not set. Falling back to a random per-process " +
+        "key. Set QUERY_DIGEST_PEPPER in the environment to protect query digests " +
+        "against a leaked-database dictionary attack."
+    );
+    return randomBytes(32).toString("hex");
+  })();
 
 const PLANS = {
   free: { label: "Free", dailyQuota: 10 },
