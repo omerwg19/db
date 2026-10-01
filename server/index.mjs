@@ -330,15 +330,22 @@ async function handleApi(req, res, url) {
     }
   }
 
-  // Provider callback. Unauthenticated by necessity, so every request is
-  // gated on the HMAC signature first and the status is then re-read from the
-  // provider API rather than taken from the caller's body.
+  // Provider callback. Unauthenticated by necessity, so every request is gated
+  // on the HMAC signature first and the status is then re-read from the provider
+  // API rather than taken from the caller's body.
+  //
+  // The 200 is written before the confirmation round-trip. They time an endpoint
+  // out at 3s and mark the payment failed, and a retry cannot help if we were
+  // too slow to record it. provider_ref is UNIQUE, so the late processing and
+  // any resulting retry stay idempotent.
   if (route === "POST /api/billing/webhook") {
     const body = await readBody(req);
-    if (!verifyIpnSignature(body, req.headers["x-nowpayments-signature"])) {
+    const signature = req.headers["x-nowpayments-sig"] ?? req.headers["x-nowpayments-signature"];
+    if (!verifyIpnSignature(body, signature)) {
       auth.log("billing.webhook.rejected", { detail: "signature" });
       return json(res, 401, { error: "Bad signature." });
     }
+
     const ref = String(body.payment_id ?? "");
     const row = auth.getPaymentByRef(ref);
     if (!row) return json(res, 200, { ok: true, ignored: true });
@@ -350,18 +357,23 @@ async function handleApi(req, res, url) {
     }
     if (status !== "finished") return json(res, 200, { ok: true, pending: true });
 
+    json(res, 200, { ok: true });
     try {
       const remote = await confirmPayment(ref);
       const paid = Number(remote.actually_paid ?? 0);
       // Underpayment must never upgrade the account.
       if (remote.payment_status !== "finished" || paid + 1e-8 < row.amount_usd) {
-        return json(res, 200, { ok: true, pending: true, reason: "underpaid" });
+        auth.log("billing.webhook.underpaid", {
+          userId: row.user_id,
+          detail: `paid=${paid} expected=${row.amount_usd}`,
+        });
+        return;
       }
       auth.applyPayment(row.id, { crypto: remote.pay_currency, status, raw: remote });
     } catch {
-      return json(res, 200, { ok: true, pending: true });
+      auth.log("billing.webhook.confirm_failed", { userId: row.user_id, detail: ref });
     }
-    return json(res, 200, { ok: true });
+    return;
   }
 
   /* ---- session introspection (used by the SPA-ish nav) ---- */
