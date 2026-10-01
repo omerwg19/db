@@ -278,6 +278,10 @@ async function handleApi(req, res, url) {
       // to the boot log instead.
       db_persistent: store.persistent,
       db_bytes: store.bytes,
+      // Generated once and stored inside the database. Compare it before and
+      // after a deploy: a changed value means the volume was recreated and
+      // every account was lost, which no path check can detect.
+      store_id: store.storeId,
     };
     return json(res, db === "ok" ? 200 : 503, body);
   }
@@ -873,7 +877,18 @@ server.listen(PORT, HOST, () => {
     `  rows: ${store.users} user(s), ${store.sessions} session(s), ${store.payments} payment(s)` +
       (store.oldest ? `, oldest account ${store.oldest}` : ", no accounts yet")
   );
-  if (store.bytes !== null) console.log(`  size: ${store.bytes} bytes`);
+  if (store.bytes !== null) console.log(`  size: ${store.bytes} bytes (including WAL)`);
+  console.log(`  store_id: ${store.storeId} (created ${store.storeCreated})`);
+  if (store.empty) {
+    // This is the signature of a volume that was recreated by a deploy. It also
+    // describes a brand new install, so it is a prompt to check store_id rather
+    // than an assertion that data was lost.
+    console.warn(
+      "  WARNING: the store is empty (0 accounts, 0 payments). If you expected " +
+        "existing accounts, the volume did not survive the last deploy. Compare " +
+        "store_id above with the previous build to confirm."
+    );
+  }
   if (!store.persistent) {
     // Loud on purpose: this is silent data loss, and it only shows up at the
     // next deploy, long after whoever set it stopped thinking about it.

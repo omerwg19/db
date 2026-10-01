@@ -3,6 +3,7 @@
 import { DatabaseSync } from "node:sqlite";
 import {
   randomBytes,
+  randomUUID,
   scryptSync,
   timingSafeEqual,
   createHash,
@@ -73,7 +74,17 @@ export class Auth {
     let bytes = null;
     if (this.dbPath !== ":memory:") {
       try {
-        bytes = statSync(this.dbPath).size;
+        // WAL keeps recent writes in the -wal file, so the main file alone sits
+        // at one page (4096 bytes) no matter how much data there is. Reporting
+        // only that number made a populated database look empty.
+        bytes = 0;
+        for (const suffix of ["", "-wal", "-shm"]) {
+          try {
+            bytes += statSync(this.dbPath + suffix).size;
+          } catch {
+            /* -wal and -shm disappear once a checkpoint has run; not an error. */
+          }
+        }
       } catch {
         bytes = null;
       }
@@ -85,7 +96,21 @@ export class Auth {
       this.dbPath === "/home/node/data/veriscope.db" ||
       this.dbPath.startsWith("/home/node/");
 
-    return { path: this.dbPath, persistent, bytes, users, sessions, payments, oldest };
+    return {
+      path: this.dbPath,
+      persistent,
+      bytes,
+      users,
+      sessions,
+      payments,
+      oldest,
+      storeId: this.meta("store_id"),
+      storeCreated: this.meta("store_created"),
+      // A store with no users and no payments is what a recreated volume looks
+      // like. It is also what a brand new install looks like, so this is a
+      // prompt to check, not proof on its own.
+      empty: users === 0 && payments === 0,
+    };
   }
 
   migrate() {
@@ -199,6 +224,35 @@ export class Auth {
         created_at   INTEGER NOT NULL
       )`);
     }
+
+    /* A key/value table so the store can identify itself. Checking DB_PATH
+       tells you where the database was asked to go; it cannot tell you whether
+       the platform actually kept it. Hyperlift reported a perfectly healthy
+       /home/node/data/veriscope.db while wiping every account on each build.
+       A store_id written into the database itself is the only honest test:
+       if it changes across a deploy, the volume was recreated and the previous
+       data is gone. */
+    this.db.exec(`
+      CREATE TABLE IF NOT EXISTS meta (
+        key   TEXT PRIMARY KEY,
+        value TEXT NOT NULL
+      )
+    `);
+
+    if (!this.meta("store_id")) {
+      this.setMeta("store_id", randomUUID());
+      this.setMeta("store_created", new Date().toISOString());
+    }
+  }
+
+  meta(key) {
+    return this.db.prepare("SELECT value FROM meta WHERE key = ?").get(key)?.value ?? null;
+  }
+
+  setMeta(key, value) {
+    this.db
+      .prepare("INSERT INTO meta (key, value) VALUES (?, ?) ON CONFLICT(key) DO UPDATE SET value = excluded.value")
+      .run(key, String(value));
   }
 
   /* ---------------------------------------------------------- passwords -- */

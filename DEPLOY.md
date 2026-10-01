@@ -64,43 +64,61 @@ node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
 
 ### 3a. Prove your accounts survive a deploy
 
-Do not assume this works. A database in the wrong place, or a volume that is not
-actually attached, looks completely healthy right up until the first build after
-the accounts exist, and then every account is gone with nothing in the logs to
-explain it.
+**Do this before you care about accounts, not after.** Accounts vanishing on
+redeploy is the worst failure this app has, and nothing about a healthy-looking
+site tells you it is happening. On this deployment `/home/node/data/veriscope.db`
+was configured correctly, `db_persistent` reported `true`, the health check was
+green — and every account was still destroyed by the next build.
 
-Check the store is really on the volume:
+So the test is empirical, and it takes two minutes:
 
 ```bash
 curl -s https://your-domain.com/api/health
 ```
 
 ```json
-{"ok":true,"db":"ok","db_path":"/home/node/data/veriscope.db","db_persistent":true}
+{"ok":true,"db":"ok","db_path":"/home/node/data/veriscope.db",
+ "db_persistent":true,"store_id":"0f1c2b3a-..."}
 ```
-
-`db_persistent` is computed from `DB_PATH`, not hard-coded, so `false` means the
-path is wrong and accounts will vanish on the next deploy. Fix it and restart.
-
-Then run the real test, once, before you care about this:
 
 1. Create an account.
 2. Push a commit (or press Rebuild) and wait for the deploy to finish.
-3. Sign in with that account.
+3. Run `curl` again and compare `store_id`.
+4. Sign in with the account from step 1.
 
-If the sign-in fails, the volume is not surviving the build. In Hyperlift, open
-the application's settings and confirm a persistent volume/disk is attached and
-that it covers `/home/node`. The boot log states the resolved path, the row
-counts, and a loud warning if the database is outside the volume:
+`store_id` is generated once and written **inside the database**, so it cannot
+lie the way a path check can:
+
+| Result | Meaning |
+| --- | --- |
+| `store_id` unchanged, sign-in works | storage is genuinely persistent |
+| `store_id` changed | the volume was recreated; everything is gone |
+| `store_id` unchanged, sign-in fails | a real bug in the app, not the platform |
+
+If `store_id` changes, no amount of `DB_PATH` tuning will help — the database
+is being written somewhere that is discarded. Attach persistent storage covering
+`/home/node` to the application in the Hyperlift manager, or move the app to a
+host that provides it. Note that Spaceship's Volumes product attaches to virtual
+machines, not to Hyperlift applications, so confirm your plan actually offers
+persistent storage for Hyperlift before planning around it.
+
+`db_persistent` is kept as a cheap first check: it is computed from `DB_PATH`,
+not hard-coded, so `false` means the path is wrong. But as the table above shows,
+`true` does not prove persistence.
+
+The boot log reports the same facts with row counts, which are the quickest way
+to see a reset between two deploys:
 
 ```
 Database: /home/node/data/veriscope.db (on the persistent volume)
   rows: 3 user(s), 2 session(s), 0 payment(s), oldest account 2026-09-30 11:02:41
-  size: 57344 bytes
+  size: 259376 bytes (including WAL)
+  store_id: 0f1c2b3a-... (created 2026-09-30T11:02:34.787Z)
 ```
 
-Comparing `rows:` between two deploys is the quickest way to see a database being
-reset. Back the volume up before you need it: `deploy/backup.sh`.
+A boot log that warns `the store is empty (0 accounts, 0 payments)` on an
+established site means the last deploy reset it. Back the volume up with
+`deploy/backup.sh` before you need it.
 
 ### 3b. Crypto payments (optional)
 
