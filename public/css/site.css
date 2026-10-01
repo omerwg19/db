@@ -510,7 +510,7 @@ footer{border-top:1px solid var(--line);background:var(--card);padding:52px 0 36
 .alert svg{width:17px;height:17px;flex:0 0 auto;margin-top:1px}
 .alert-error{background:var(--danger-soft);border:1px solid var(--danger-line);color:var(--danger-ink)}
 .alert-ok{background:var(--green-soft);border:1px solid var(--ok-line);color:var(--ok-ink)}
-.alert-info{background:var(--accent-soft);border:1px solid var(--accent-line);color:var(--accent-deep)}
+.alert-info{background:var(--accent-soft);border:1px solid var(--accent-line);color:var(--accent-on-soft)}
 .checkbox{display:flex;align-items:flex-start;gap:10px;font-size:13.5px;color:var(--muted);line-height:1.5}
 .checkbox input{width:17px;height:17px;margin:1px 0 0;accent-color:var(--accent);flex:0 0 auto}
 

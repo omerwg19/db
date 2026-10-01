@@ -85,9 +85,49 @@
       alertBox.querySelector("svg").innerHTML =
         '<path d="M20 6 9 17l-5-5"/>';
     }
+    // The alert sits above the form, but the submit button is at the bottom of
+    // it. On a phone the message landed off-screen, so a failed sign-up looked
+    // like the button had simply done nothing. Scroll it into view instead.
+    alertBox.scrollIntoView({ block: "nearest", behavior: "smooth" });
   }
 
   function clear() { alertBox.className = "alert"; }
+
+  /* A throttled sign-up gets a live countdown rather than a vague "later", so
+     it is obvious the request was understood and when it is worth retrying. */
+  var countdownTimer = null;
+
+  function throttle(res) {
+    var wait = Number(res.data.retryAfter) || Number(res.headers && res.headers.get("Retry-After")) || 0;
+    var btnLabel = function (s) {
+      var m = Math.floor(s / 60);
+      return m > 0 ? "Try again in " + m + "m " + (s % 60) + "s" : "Try again in " + s + "s";
+    };
+
+    if (!wait) {
+      say(res.data.error || "Could not create the account.", "error");
+      submit.disabled = false;
+      submit.textContent = "Create account";
+      return;
+    }
+
+    var left = wait;
+    submit.disabled = true;
+    say(res.data.error || "Too many attempts. " + btnLabel(left), "error");
+    submit.textContent = btnLabel(left);
+
+    clearInterval(countdownTimer);
+    countdownTimer = setInterval(function () {
+      left -= 1;
+      if (left <= 0) {
+        clearInterval(countdownTimer);
+        submit.disabled = false;
+        submit.textContent = "Create account";
+        return;
+      }
+      submit.textContent = btnLabel(left);
+    }, 1000);
+  }
 
   /* Validates everything, paints each field's own message, and reports the
      first offending input so focus can go there. */
@@ -161,10 +201,23 @@
       }),
     })
       .then(function (r) {
-        return r.json().then(function (d) { return { ok: r.ok, data: d }; });
+        return r.json().then(function (d) {
+          return { ok: r.ok, status: r.status, data: d, headers: r.headers };
+        });
       })
       .then(function (res) {
+        if (res.data && res.data.error === "An account with that email already exists.") {
+          // Sign in instead: this is almost always the same person who forgot
+          // they already registered, and "that email already exists" with no
+          // way forward reads like a dead end.
+          say("That email already has an account. Try signing in instead.", "error");
+          setTimeout(function () {
+            location.href = "/login.html?next=" + encodeURIComponent(location.search);
+          }, 1600);
+          return;
+        }
         if (!res.ok) {
+          if (res.status === 429) return throttle(res);
           say(res.data.error || "Could not create the account.", "error");
           submit.disabled = false;
           submit.textContent = "Create account";

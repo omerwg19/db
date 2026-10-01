@@ -26,6 +26,10 @@
   function say(msg) {
     alertText.textContent = msg;
     alertBox.className = "alert on alert-error";
+    // Keep the message reachable: it renders above the form while the submit
+    // button sits at the bottom, so on a phone it was often off-screen and a
+    // failed attempt just looked inert.
+    alertBox.scrollIntoView({ block: "nearest", behavior: "smooth" });
   }
   function clear() {
     alertBox.className = "alert";

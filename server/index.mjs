@@ -422,23 +422,35 @@ async function handleApi(req, res, url) {
 
   /* ---- register ---- */
   if (route === "POST /api/register") {
-    const limit = auth.checkRate("register", ip, 5, 60 * 60 * 1000);
-    if (!limit.ok) {
-      return json(res, 429, { error: "Too many accounts from this address. Try again later." },
-        { "Retry-After": limit.retryAfter });
-    }
-
     const body = await readBody(req);
     const problem = validateRegistration(body);
     if (problem) return json(res, 400, { error: problem });
 
-    const existing = auth.getUserRowByEmail(body.email);
+    /* Rate limiting happens after validation, so a typo cannot burn the quota.
+       The address is limited separately from the IP: a single IP limit punishes
+       everyone behind the same NAT (mobile carrier CGNAT, office, VPN, school)
+       for something they did not do, and one household testing a few addresses
+       looks exactly like credential stuffing. */
+    const byIp = auth.checkRate("register-ip", ip, 20, 60 * 60 * 1000);
+    if (!byIp.ok) {
+      return json(res, 429, { error: "Too many sign-up attempts from this connection. Try again later.", retryAfter: byIp.retryAfter },
+        { "Retry-After": byIp.retryAfter });
+    }
+
+    const mail = String(body.email ?? "").trim().toLowerCase();
+    const existing = auth.getUserRowByEmail(mail);
     if (existing) {
       return json(res, 409, { error: "An account with that email already exists." });
     }
 
+    const byMail = auth.checkRate("register-mail", mail, 3, 60 * 60 * 1000);
+    if (!byMail.ok) {
+      return json(res, 429, { error: "Too many sign-up attempts for this email address. Try again later.", retryAfter: byMail.retryAfter },
+        { "Retry-After": byMail.retryAfter });
+    }
+
     const user = auth.createUser({
-      email: body.email,
+      email: mail,
       password: body.password,
       name: body.name,
     });
