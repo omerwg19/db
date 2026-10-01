@@ -15,6 +15,24 @@
   var EMAIL_RE = /^[^\s@]+@[^\s@]+\.[a-z]{2,}$/i;
   var MIN = 10;
 
+  // Already signed in? This page is reached from the pricing page's upgrade
+  // buttons, so an existing customer should go straight to where they were
+  // heading rather than be asked to register an account they already have.
+  fetch("/api/me", { credentials: "same-origin" })
+    .then(function (r) { return r.json(); })
+    .then(function (d) {
+      if (!d.user) return;
+      var params = new URLSearchParams(location.search);
+      var plan = params.get("plan");
+      var q = params.get("q");
+      location.replace(
+        plan === "pro"
+          ? "/checkout.html"
+          : "/dashboard.html" + (q ? "?q=" + encodeURIComponent(q) : "")
+      );
+    })
+    .catch(function () {});
+
   function say(msg, kind) {
     alertText.textContent = msg;
     alertBox.className = "alert on alert-" + (kind || "error");
