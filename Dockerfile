@@ -1,13 +1,17 @@
 # Veriscope — container image.
 #
-# Works on Spaceship Hyperlift and any Docker host. Two rules matter:
-#   1. The persistent volume is mounted at /home/node, so ALL mutable state
+# Works on Spaceship Hyperlift and any Docker host. Three rules matter:
+#   1. The persistent volume is mounted at /home/node, so all mutable state
 #      (the SQLite database) must live under it. App code goes in /app.
-# 8080 is Hyperlift's default application port. Platform-injected PORT wins
-# over this value, so setting PORT in the dashboard also works.
-# Do not rely on EXPOSE here; Hyperlift routes using the environment variable.
+#   2. Hyperlift's default application port is 8080, configured through the
+#      environment rather than EXPOSE. Platform-injected PORT wins over this.
+#   3. Keep the layer count low. The builder snapshots the whole filesystem per
+#      instruction, so every extra COPY/RUN costs real time on each build.
 #
-# Required environment variables are set in the platform's dashboard:
+# No dependencies to install, so there is nothing to cache between layers and a
+# single COPY of the tree is the fastest option.
+#
+# Required environment variables, set in the platform dashboard:
 #   PUBLIC_ORIGIN, QUERY_DIGEST_PEPPER, MAIL_WEBHOOK, DB_PATH, PORT
 
 FROM node:24-slim
@@ -19,16 +23,11 @@ ENV NODE_ENV=production \
 
 WORKDIR /app
 
-# No dependencies to install; copy the app and drop privileges.
-COPY --chown=node:node package.json ./
-COPY --chown=node:node server ./server
-COPY --chown=node:node public ./public
-COPY --chown=node:node tools ./tools
+# One layer instead of five. .dockerignore keeps data/, node_modules and
+# deploy/ out of the image.
+COPY --chown=node:node . .
 
-# Data lives on the volume, so only the directory is needed here.
-RUN mkdir -p /home/node/data && chown -R node:node /home/node
-
+# The app creates the database and its parent directory on first boot.
 USER node
 
-# The app creates the DB and its parent directory on first boot.
 CMD ["node", "server/index.mjs"]
