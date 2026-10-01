@@ -2,6 +2,9 @@ data/
 node_modules/
 .git/
 .gitignore
+.env
+.env.*
+*.env
 *.log
 *.db
 *.db-shm
