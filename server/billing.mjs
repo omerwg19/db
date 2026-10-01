@@ -86,6 +86,12 @@ export async function createCheckout({ user, plan, origin, ip }) {
       // Our own payment row id is the link between callback and account.
       order_id: `p${user.id}`,
       order_description: `Veriscope ${price.label} - ${price.periodDays} days`,
+      // Set per-request as well as in the dashboard. One of the two is always
+      // enough, which means a callback URL forgotten in the provider UI still
+      // delivers webhooks instead of silently losing paid orders.
+      ipn_callback_url: `${origin}/api/billing/webhook`,
+      ipn_allowed_updates: ["waiting", "confirming", "confirmed", "finished", "failed", "refunded", "expired"],
+      ipn_checkout_url: `${origin}/checkout.html`,
       ip_address: ip && ip.includes(".") ? ip : undefined,
       success_url: `${origin}/dashboard.html?paid=1`,
       cancel_url: `${origin}/pricing.html`,
