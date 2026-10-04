@@ -1,26 +1,30 @@
 // DeHashed breach search.
 //
 // The lookup used to invent its results, so there was nothing real to show.
-// This calls the actual API. Three things are deliberate:
+// This calls the actual API.
+//
+// The shape below is the current one: POST /v2/search with the key in a
+// Dehashed-Api-Key header and the query in a JSON body. Earlier versions used
+// GET /search with HTTP Basic auth and that path now answers 404, so anything
+// written against the older guides fails in a way that looks like an outage
+// rather than a version bump.
+//
+// Two deliberate choices:
 //
 //  1. Credentials in the response are never returned. DeHashed regularly hands
 //     back plaintext passwords from stealer logs. This app reports which fields
 //     a leaked record contained, never their values: that is what someone
 //     checking an exposure actually needs, and it keeps the site from becoming
 //     a credential dispenser.
-//  2. The published auth and response shapes differ between DeHashed's own
-//     docs and third-party integrations, and the API has been versioned at
-//     least once. Rather than betting on one shape and failing in a way that
-//     looks like an outage, the response is read liberally and the auth mode
-//     can be switched with an environment variable.
-//  3. Every query costs the account a credit, so a malformed identifier is
-//     rejected before it reaches the network.
+//  2. Every query costs a credit, so an identifier that cannot be matched to a
+//     searchable field is rejected before the request is made.
 
 const env = (name, fallback = "") => String(process.env[name] ?? "").trim() || fallback;
 
-const ENDPOINT = "https://api.dehashed.com/search";
+const ENDPOINT = "https://api.dehashed.com/v2/search";
 const TIMEOUT_MS = 20_000;
 const MAX_HITS = 50;
+const PAGE_SIZE = 100;
 
 // detectKind() in index.mjs names things for the interface; DeHashed searches
 // by field name. Discord snowflakes and anything unrecognised have no
@@ -37,15 +41,7 @@ const FIELD_FOR_KIND = {
 export const ATTRIBUTION = "Breach data from DeHashed";
 
 export function status() {
-  const key = env("DEHASHED_API_KEY");
-  return {
-    configured: Boolean(key),
-    mode: env("DEHASHED_AUTH_MODE", "basic").toLowerCase(),
-    // The address itself, not whether one was set: authHeader() signs with it,
-    // and a boolean here silently produced the username "true".
-    email: env("DEHASHED_API_EMAIL"),
-    key,
-  };
+  return { configured: Boolean(env("DEHASHED_API_KEY")), key: env("DEHASHED_API_KEY") };
 }
 
 export class LookupError extends Error {
@@ -62,16 +58,8 @@ function quote(value) {
   return `"${String(value).replace(/(["\\])/g, "\\$1")}"`;
 }
 
-function authHeader() {
-  const { key, mode, email } = status();
-  if (mode === "bearer") return `Bearer ${key}`;
-  // Documented as "email:API-key"; the key alone as the username also appears
-  // in the wild for accounts that have no email on file.
-  return `Basic ${Buffer.from(`${email || key}:${key}`).toString("base64")}`;
-}
-
-// The API has used entries, data and database for the result array depending on
-// version, and returns null for the array when nothing matched.
+// The array has been entries, data and database across versions, and comes back
+// null rather than empty when nothing matched.
 function extractEntries(body) {
   for (const field of ["entries", "data", "database"]) {
     const value = body?.[field];
@@ -113,16 +101,16 @@ function toHit(entry, kind) {
   return {
     source: entry?.database_name || entry?.source || "Unattributed source",
     kind,
-    // DeHashed records carry the breach name more reliably than its date, so
-    // the date column says what is actually known rather than inventing one.
+    // DeHashed records carry the breach name far more reliably than its date,
+    // so the date says what is actually known rather than inventing one.
     breached: entry?.date || entry?.breach_date || "Date not published",
     fields,
     confidence: confidenceOf(entry, fields),
   };
 }
 
-export async function search({ kind, input, size = 100 }) {
-  const { configured } = status();
+export async function search({ kind, input, size = PAGE_SIZE }) {
+  const { configured, key } = status();
   if (!configured) {
     throw new LookupError("Lookups are not configured on this server yet.", { status: 503 });
   }
@@ -137,62 +125,71 @@ export async function search({ kind, input, size = 100 }) {
     );
   }
 
-  const url = `${ENDPOINT}?query=${encodeURIComponent(`${field}:${quote(input)}`)}&size=${size}`;
-
   let res;
   try {
-    res = await fetch(url, {
-      headers: { Accept: "application/json", Authorization: authHeader() },
+    res = await fetch(ENDPOINT, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "Dehashed-Api-Key": key },
+      body: JSON.stringify({
+        query: `${field}:${quote(input)}`,
+        page: 1,
+        size,
+        wildcard: false,
+        regex: false,
+        de_dupe: true,
+      }),
       signal: AbortSignal.timeout(TIMEOUT_MS),
       redirect: "follow",
     });
   } catch (err) {
-    const timedOut = err?.name === "TimeoutError";
     throw new LookupError(
-      timedOut
+      err?.name === "TimeoutError"
         ? "The data source did not respond in time. Try again."
         : "Could not reach the data source. Try again shortly.",
       { status: 502, detail: err?.message },
     );
   }
 
+  const body = await res.json().catch(() => null);
+
   if (res.status === 401 || res.status === 403) {
-    throw new LookupError("The data source rejected our credentials.", { status: 502 });
+    throw new LookupError("The data source rejected our API key.", { status: 502, detail: body?.error });
   }
   if (res.status === 402) {
-    // DeHashed returns 402 when the subscription or credits are gone. Worth
-    // saying plainly: it means nobody can search until it is topped up.
+    // Worth saying plainly: nobody can search until the subscription or credits
+    // are topped up, and "an error occurred" would not tell anyone that.
     throw new LookupError("The data source has no queries left. The subscription needs topping up.", {
       status: 503,
+      detail: body?.error,
     });
   }
-  if (res.status === 429 || res.status === 400) {
-    throw new LookupError("The data source is rate limiting us. Try again in a moment.", {
-      status: 429,
-    });
+  if (res.status === 429) {
+    throw new LookupError("The data source is rate limiting us. Try again in a moment.", { status: 429 });
   }
   if (!res.ok) {
-    throw new LookupError(`The data source returned an error (HTTP ${res.status}).`, { status: 502 });
+    throw new LookupError(`The data source returned an error (HTTP ${res.status}).`, {
+      status: 502,
+      detail: body?.error || body?.message,
+    });
   }
 
-  let body;
-  try {
-    body = await res.json();
-  } catch {
+  // A 200 can still carry a complaint, which is how some quota states surface.
+  if (!body) {
     throw new LookupError("The data source sent a response we could not read.", { status: 502 });
   }
-
-  // A 200 can still carry a complaint, which is how "no subscription" shows up.
-  if (body?.message && !extractEntries(body).length) {
-    throw new LookupError(String(body.message).slice(0, 200), { status: 502 });
+  if (body.error && !extractEntries(body).length) {
+    throw new LookupError(String(body.error).slice(0, 200), { status: 503, detail: body.error });
   }
 
   const entries = extractEntries(body);
-  const total = Number(body?.total ?? entries.length) || entries.length;
+  const total = Number(body.total ?? entries.length) || entries.length;
 
   return {
     hits: entries.slice(0, MAX_HITS).map((entry) => toHit(entry, kind)),
     total,
     truncated: total > MAX_HITS,
+    // Surfaced so the credit balance is visible instead of a silent surprise
+    // when a search suddenly stops working.
+    balance: Number.isFinite(body.balance) ? body.balance : null,
   };
 }

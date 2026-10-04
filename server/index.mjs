@@ -707,11 +707,13 @@ async function handleApi(req, res, url) {
     let hits;
     let total;
     let truncated = false;
+    let balance = null;
     try {
       const result = await dehashed.search({ kind, input });
       hits = result.hits;
       total = result.total;
       truncated = result.truncated;
+      balance = result.balance;
     } catch (err) {
       if (err instanceof dehashed.LookupError) {
         return json(res, err.status, { error: err.message });
@@ -730,6 +732,9 @@ async function handleApi(req, res, url) {
       quota: { used: used + 1, limit: found.user.dailyQuota },
       provider: "dehashed",
       attribution: dehashed.ATTRIBUTION,
+      // Reported so a silently exhausted credit balance is visible while there
+      // is still time to top it up, rather than as a lookup that stops working.
+      creditsLeft: balance,
       demo: false,
     });
   }

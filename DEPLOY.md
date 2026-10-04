@@ -181,21 +181,25 @@ pretending, which is what it used to do.
 | Variable | Required | Meaning |
 | --- | --- | --- |
 | `DEHASHED_API_KEY` | yes | API key from your DeHashed account |
-| `DEHASHED_API_EMAIL` | recommended | The account email, sent as the Basic auth username |
-| `DEHASHED_AUTH_MODE` | no | `basic` (default) or `bearer` |
 
-DeHashed's own documentation and the third-party integrations disagree about the
-authentication scheme, and the API has been versioned more than once, so if
-every search comes back `The data source rejected our credentials`, set
-`DEHASHED_AUTH_MODE=bearer` and redeploy. That is the one thing here that cannot
-be checked without a live key.
+That is the whole configuration. There is no email to add: the current API takes
+the key on its own `Dehashed-Api-Key` header, so `DEHASHED_API_EMAIL` and
+`DEHASHED_AUTH_MODE` from earlier drafts of this document have been removed.
 
-**Every query spends a credit.** A lookup that cannot be matched to a searchable
-field is refused before it reaches the network, so a mistyped identifier costs
-nothing.
+If searches come back `The data source rejected our API key`, the key is wrong,
+expired, or the subscription is not active. The wire format is POST to
+`/v2/search` with a JSON body; the older GET `/search` plus HTTP Basic that
+older guides describe now answers `404`, which is a version bump rather than a
+misconfiguration.
+
+**Every query spends a credit.** A lookup that cannot be matched to a
+searchable field is refused before it reaches the network, so a mistyped
+identifier costs nothing. The remaining balance is returned with each result as
+`creditsLeft`, so an exhausted balance shows up while there is still time to top
+it up rather than as a lookup that has simply stopped working.
 
 Leaked credentials are never returned to the browser or stored: a result tells
-you which fields a leaked record contained, not the values. That keeps the site
+you which kinds of data a leaked record held, not the values. That keeps the site
 from being a credential dispenser, and it is the part of a breach tool most
 likely to cause harm if it were exposed.
 
