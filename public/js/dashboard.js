@@ -246,7 +246,49 @@
       return;
     }
 
-    results.innerHTML = data.hits.map(function (h) {
+    // Correlation panel: which values travel together across breaches. This is
+    // the part that answers "what is this connected to" -- the password value
+    // itself is never in the data, but its presence is, and that is the risk.
+    var cor = data.correlation;
+    var corHtml = "";
+    if (cor && cor.exposure && cor.exposure.breaches > 0) {
+      var ex = cor.exposure;
+      var credNote = ex.withCredential > 0
+        ? '<p class="muted" style="font-size:13px;margin:8px 0 0">' +
+          ex.withCredential + " of " + ex.breaches + " record" + (ex.breaches === 1 ? "" : "s") +
+          " carried a " + (ex.credentialType === "hash" ? "password hash" : "recovered password") +
+          (ex.reused ? ", reused across every one of them" : "") +
+          ". The value is withheld; the fact that it was exposed is not.</p>"
+        : '<p class="muted" style="font-size:13px;margin:8px 0 0">No credential in this result set.</p>';
+
+      var nodes = (cor.nodes || [])
+        .map(function (n) {
+          return (
+            '<div class="cor-row">' +
+              '<div class="cor-val"><span class="cor-lbl">' + esc(n.label) + '</span>' +
+              '<span class="mono">' + esc(n.value) + "</span></div>" +
+              '<div class="cor-srcs">' +
+                n.sources.map(function (s) { return "<span>" + esc(s) + "</span>"; }).join("") +
+              "</div>" +
+            "</div>"
+          );
+        })
+        .join("");
+
+      corHtml =
+        '<div class="cor-block">' +
+          '<h3 class="cor-h">What this is connected to</h3>' +
+          '<p class="muted" style="font-size:13px;margin:0 0 10px">' +
+            ex.breaches + " record" + (ex.breaches === 1 ? "" : "s") + " across " +
+            ex.sourceCount + " source" + (ex.sourceCount === 1 ? "" : "s") + "." +
+            (nodes ? " Values below appear in more than one breach, which is what links them to the same person." : "") +
+          "</p>" +
+          credNote +
+          (nodes ? '<div class="cor-list">' + nodes + "</div>" : "") +
+        "</div>";
+    }
+
+    results.innerHTML = corHtml + data.hits.map(function (h) {
       var conf = h.confidence === "high" ? "high" : h.confidence === "medium" ? "medium" : "low";
 
       // Real values from the leaked record, so the finding is actionable rather

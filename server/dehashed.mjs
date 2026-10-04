@@ -151,6 +151,64 @@ function toHit(entry, kind) {
   };
 }
 
+// What makes a breach record worth reading is that its fields travel together.
+// A username here and a physical address there are usually the same person, and
+// the combination is what lets an attacker confirm a target or fill in a blank on
+// a form they already half-know. So the shared values are grouped across the
+// result set rather than left to be eyeballed one card at a time.
+//
+// The credential is counted here exactly like any other field -- it is only ever
+// a yes/no and a length. Grouping it does not reveal it, and hiding it would
+// make this panel lie: "exposed alongside 3 other accounts" is the actual risk,
+// and it is true whether or not the value is displayed.
+const SHARED_STRENGTH = { "IP address": "high", Username: "high", Phone: "high", "Physical address": "high", VIN: "high", Email: "medium", Name: "low", Domain: "low" };
+
+function correlate(hits, query) {
+  const groups = new Map();
+  const sourcesFor = (value) => hits.filter((h) => h.details.some((d) => d.value === value)).map((h) => h.source);
+  const seen = new Set();
+  // Whatever was just searched for is trivially present in every record, so
+  // listing it as a connection would pad the panel with something the reader
+  // already knows. The other fields are the ones doing the linking.
+  const self = typeof query === "string" ? query.trim().toLowerCase() : "";
+
+  for (const hit of hits) {
+    for (const { label, value } of hit.details) {
+      const key = label + "" + value.toLowerCase();
+      if (seen.has(key)) continue;
+      seen.add(key);
+      if (value.trim().toLowerCase() === self) continue;
+      if (!groups.has(value)) groups.set(value, { value, label, sources: sourcesFor(value) });
+    }
+  }
+
+  const nodes = [...groups.values()]
+    .filter((g) => g.sources.length > 1)
+    .map((g) => ({
+      label: g.label,
+      value: g.value,
+      sources: [...new Set(g.sources)],
+      strength: SHARED_STRENGTH[g.label] || "low",
+    }))
+    .sort((a, b) => b.sources.length - a.sources.length || a.label.localeCompare(b.label));
+
+  const credentialBreaches = hits.filter((h) => h.credential.present);
+  const reused = credentialBreaches.length > 1;
+
+  return {
+    nodes,
+    // The headline number: distinct accounts in the result set that were breached
+    // alongside a credential. One is a leak, several is a fill-in-the-blank list.
+    exposure: {
+      breaches: hits.length,
+      withCredential: credentialBreaches.length,
+      credentialType: credentialBreaches[0]?.credential?.type || null,
+      reused,
+      sourceCount: new Set(hits.map((h) => h.source)).size,
+    },
+  };
+}
+
 export async function search({ kind, input, size = PAGE_SIZE }) {
   const { configured, key } = status();
   if (!configured) {
@@ -225,9 +283,13 @@ export async function search({ kind, input, size = PAGE_SIZE }) {
 
   const entries = extractEntries(body);
   const total = Number(body.total ?? entries.length) || entries.length;
+  const hits = entries.slice(0, MAX_HITS).map((entry) => toHit(entry, kind));
 
   return {
-    hits: entries.slice(0, MAX_HITS).map((entry) => toHit(entry, kind)),
+    hits,
+    // Grouping is computed from the hits already fetched, so the panel costs
+    // nothing extra against the provider's credits.
+    correlation: correlate(hits, input),
     total,
     truncated: total > MAX_HITS,
     // Surfaced so the credit balance is visible instead of a silent surprise

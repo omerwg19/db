@@ -711,12 +711,14 @@ async function handleApi(req, res, url) {
     let total;
     let truncated = false;
     let balance = null;
+    let correlation = null;
     try {
       const result = await dehashed.search({ kind, input });
       hits = result.hits;
       total = result.total;
       truncated = result.truncated;
       balance = result.balance;
+      correlation = result.correlation;
     } catch (err) {
       if (err instanceof dehashed.LookupError) {
         return json(res, err.status, { error: err.message });
@@ -732,6 +734,7 @@ async function handleApi(req, res, url) {
       hits,
       total,
       truncated,
+      correlation: correlation,
       quota: { used: used + 1, limit: found.user.dailyQuota },
       provider: "dehashed",
       attribution: dehashed.ATTRIBUTION,

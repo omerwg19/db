@@ -595,6 +595,18 @@ footer{border-top:1px solid var(--line);background:var(--card);padding:52px 0 36
 [data-theme="dark"] .kv{background:var(--paper)}
 @media(max-width:600px){.kv{grid-template-columns:1fr;gap:2px}}
 
+/* ========================================================== correlation == */
+.cor-block{padding:18px 22px;border-bottom:1px solid var(--line-2);background:var(--accent-soft)}
+.cor-h{font-size:13px;font-weight:700;letter-spacing:.02em;text-transform:uppercase;color:var(--ink-2);margin:0 0 8px}
+.cor-list{margin-top:14px;display:grid;gap:1px;border:1px solid var(--line);border-radius:8px;overflow:hidden;background:var(--line)}
+.cor-row{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.15fr);gap:12px;padding:9px 11px;background:var(--paper);font-size:12.5px;align-items:start}
+.cor-val{display:flex;flex-direction:column;gap:2px;min-width:0}
+.cor-val .mono{word-break:break-all;color:var(--ink);font-size:12.5px}
+.cor-lbl{font-size:10.5px;text-transform:uppercase;letter-spacing:.05em;color:var(--muted-2);font-weight:640}
+.cor-srcs{display:flex;flex-wrap:wrap;gap:4px}
+.cor-srcs span{padding:2px 7px;border:1px solid var(--line);border-radius:5px;font-size:11px;color:var(--muted);background:var(--paper)}
+@media(max-width:700px){.cor-row{grid-template-columns:1fr;gap:7px}}
+
 /* ======================================================= password check == */
 .pc-card{max-width:620px;background:var(--paper);border:1px solid var(--line);border-radius:12px;padding:24px}
 .pc-label{display:block;font-size:13px;font-weight:640;margin-bottom:8px;color:var(--ink)}
