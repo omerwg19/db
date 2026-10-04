@@ -248,16 +248,36 @@
 
     results.innerHTML = data.hits.map(function (h) {
       var conf = h.confidence === "high" ? "high" : h.confidence === "medium" ? "medium" : "low";
+
+      // Real values from the leaked record, so the finding is actionable rather
+      // than a list of column names.
+      var rows = (h.details || [])
+        .map(function (d) {
+          return (
+            '<div class="kv"><span class="k">' + esc(d.label) + '</span>' +
+            '<span class="v mono">' + esc(d.value) + "</span></div>"
+          );
+        })
+        .join("");
+
+      var cred = h.credential || {};
+      var credLine = cred.present
+        ? '<div class="kv"><span class="k">Password</span>' +
+          '<span class="v withheld">' +
+          (cred.type === "plaintext" ? "recovered, " : "hashed, ") +
+          esc(String(cred.length)) +
+          " chars &middot; not shown" +
+          "</span></div>"
+        : "";
+
       return (
         '<div class="result">' +
           '<div class="result-top">' +
             '<span class="result-input">' + esc(h.source) + "</span>" +
             '<span class="conf ' + conf + '"><i></i>' + esc(h.confidence) + " confidence</span>" +
           "</div>" +
-          '<div class="muted" style="font-size:13px">Breached ' + esc(h.breached) + " · " + esc(h.kind) + " record</div>" +
-          '<div class="fieldchips">' +
-            h.fields.map(function (f) { return "<span>" + esc(f) + "</span>"; }).join("") +
-          "</div>" +
+          '<div class="muted" style="font-size:13px">Breached ' + esc(h.breached) + " &middot; " + esc(h.kind) + " record</div>" +
+          '<div class="kvlist">' + rows + credLine + "</div>" +
         "</div>"
       );
     }).join("");

@@ -80,6 +80,46 @@ const FIELD_LABELS = [
   ["vin", "vehicle ID"],
 ];
 
+// Non-credential fields are shown as the actual values from the leaked record.
+// That is what makes a result useful -- "this address was in a breach alongside
+// this username and IP" is the finding; a list of column names is not.
+const DETAIL_LABELS = [
+  ["email", "Email"],
+  ["username", "Username"],
+  ["name", "Name"],
+  ["phone", "Phone"],
+  ["ip_address", "IP address"],
+  ["address", "Address"],
+  ["domain", "Domain"],
+  ["vin", "Vehicle ID"],
+];
+
+function detailsOf(entry) {
+  const details = [];
+  for (const [key, label] of DETAIL_LABELS) {
+    const value = entry?.[key];
+    if (typeof value === "string" && value.length) details.push({ label, value });
+  }
+  return details;
+}
+
+// Presence and shape only, never the value. A recovered plaintext password is a
+// working credential for someone else's account, and publishing one on a
+// searchable page is an account-takeover service no matter how the page frames
+// it. Its length and type are enough to tell a real exposure from a stale one.
+function credentialOf(entry) {
+  for (const [key, type] of [
+    ["password", "plaintext"],
+    ["hashed_password", "hash"],
+  ]) {
+    const value = entry?.[key];
+    if (typeof value === "string" && value.length) {
+      return { present: true, type, length: value.length };
+    }
+  }
+  return { present: false, type: null, length: 0 };
+}
+
 function presentFields(entry) {
   return FIELD_LABELS.filter(([key]) => {
     const value = entry?.[key];
@@ -105,6 +145,8 @@ function toHit(entry, kind) {
     // so the date says what is actually known rather than inventing one.
     breached: entry?.date || entry?.breach_date || "Date not published",
     fields,
+    details: detailsOf(entry),
+    credential: credentialOf(entry),
     confidence: confidenceOf(entry, fields),
   };
 }
