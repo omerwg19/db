@@ -172,6 +172,36 @@ How it behaves:
 Crypto has no recurring billing, so nothing charges itself. Renewal is a new
 payment, which the dashboard offers explicitly.
 
+### 3c. Breach data source
+
+The lookup has to be told where real data comes from. Without a key the
+dashboard answers `Lookups are not configured on this server yet.` rather than
+pretending, which is what it used to do.
+
+| Variable | Required | Meaning |
+| --- | --- | --- |
+| `DEHASHED_API_KEY` | yes | API key from your DeHashed account |
+| `DEHASHED_API_EMAIL` | recommended | The account email, sent as the Basic auth username |
+| `DEHASHED_AUTH_MODE` | no | `basic` (default) or `bearer` |
+
+DeHashed's own documentation and the third-party integrations disagree about the
+authentication scheme, and the API has been versioned more than once, so if
+every search comes back `The data source rejected our credentials`, set
+`DEHASHED_AUTH_MODE=bearer` and redeploy. That is the one thing here that cannot
+be checked without a live key.
+
+**Every query spends a credit.** A lookup that cannot be matched to a searchable
+field is refused before it reaches the network, so a mistyped identifier costs
+nothing.
+
+Leaked credentials are never returned to the browser or stored: a result tells
+you which fields a leaked record contained, not the values. That keeps the site
+from being a credential dispenser, and it is the part of a breach tool most
+likely to cause harm if it were exposed.
+
+Note that lookups now send the identifier to a third party, which the privacy
+policy states in full.
+
 ### 4. Attach the domain
 
 Hyperlift provides built-in SSL and supports a custom domain. Add the domain to

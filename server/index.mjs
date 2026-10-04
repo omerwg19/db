@@ -7,6 +7,7 @@ import { createHash } from "node:crypto";
 import { fileURLToPath } from "node:url";
 import { Auth, PLANS, CHECKOUT_PLANS } from "./auth.mjs";
 import { createBackup, restoreIfEmpty, backupStatus } from "./backup.mjs";
+import * as dehashed from "./dehashed.mjs";
 import {
   billingConfigured,
   verifyIpnSignature,
@@ -219,8 +220,9 @@ if (!EMAIL_RE.test(email)) return "Enter a valid email address.";
 }
 
 /* -------------------------------------------------------------- search -- */
-// Placeholder resolver. Returns synthetic, clearly-labelled demo hits so the
-// dashboard has something to render. Swap this for the real upstream client.
+// What the user typed decides which upstream field is searched. It is a guess,
+// and provider fields are fewer than the shapes people paste, so anything it
+// cannot place is refused by the provider rather than billed as a query.
 function detectKind(input) {
   const v = input.trim();
   if (EMAIL_RE.test(v)) return "Email";
@@ -230,27 +232,6 @@ function detectKind(input) {
   if (/^\d{17,20}$/.test(v)) return "Discord ID";
   if (/^[a-z0-9_.\- ]{2,40}$/i.test(v)) return "Username";
   return "Unknown";
-}
-
-const DEMO_SOURCES = [
-  "Breach corpus A", "Breach corpus B", "Infostealer log 1",
-  "Infostealer log 2", "Social profiles", "Public registry",
-];
-
-function demoHits(kind, input) {
-  const seed = [...input].reduce((a, c) => (a + c.charCodeAt(0)) % 9973, 7);
-  const count = kind === "Unknown" ? 0 : 2 + (seed % 6);
-  return Array.from({ length: count }, (_, i) => {
-    const s = (seed + i * 977) % 9999;
-    const when = new Date(Date.UTC(2024 + (s % 2), s % 12, 1 + (s % 27)));
-    return {
-      source: DEMO_SOURCES[(s + i) % DEMO_SOURCES.length],
-      kind,
-      breached: when.toISOString().slice(0, 10),
-      fields: ["email", "password hash", "username"].slice(0, 1 + (s % 3)),
-      confidence: ["low", "medium", "high"][s % 3],
-    };
-  });
 }
 
 /* -------------------------------------------------------------- routes -- */
@@ -718,14 +699,38 @@ async function handleApi(req, res, url) {
     }
 
     const kind = detectKind(input);
-    const hits = demoHits(kind, input);
+
+    // Real lookups used to be fabricated here, which meant the dashboard could
+    // never show anything worth seeing. The record kept is still only a digest
+    // of the identifier, but the identifier itself now goes to the provider,
+    // which the privacy policy has to say out loud.
+    let hits;
+    let total;
+    let truncated = false;
+    try {
+      const result = await dehashed.search({ kind, input });
+      hits = result.hits;
+      total = result.total;
+      truncated = result.truncated;
+    } catch (err) {
+      if (err instanceof dehashed.LookupError) {
+        return json(res, err.status, { error: err.message });
+      }
+      console.error("lookup failed:", err);
+      return json(res, 502, { error: "The lookup could not be completed." });
+    }
+
     auth.recordQuery(found.user.id, kind, input, hits.length);
 
     return json(res, 200, {
       query: { input, kind, at: new Date().toISOString() },
       hits,
+      total,
+      truncated,
       quota: { used: used + 1, limit: found.user.dailyQuota },
-      demo: true,
+      provider: "dehashed",
+      attribution: dehashed.ATTRIBUTION,
+      demo: false,
     });
   }
 

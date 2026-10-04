@@ -66,18 +66,20 @@
       <p>bugatti.lol is built so that the queries you run are not a record of your activity. This policy explains what we hold and why.</p>
       <h3>Account data</h3>
       <p>We store your email address, an optional display name, your plan, and a hashed password. We store the date you last signed in. That is the full account record.</p>
-      <h3>Query data</h3>
-      <p>Lookups you run are processed in memory to return results and are not written to a query log. While you are signed in, your recent queries are shown in your own dashboard so you can pick up where you left off; those entries are removed when you sign out or delete your account.</p>
+<h3>Query data</h3>
+      <p>A lookup is sent to our data provider, DeHashed, so that it can be answered. That means the identifier you type leaves our server and reaches a third party, which retains it under their own policy. We cannot answer a lookup without sending it, so please do not look up anything you are not authorised to check.</p>
+      <p>We do not store the identifier itself. What we keep is a one-way hash of it, the kind of value, the number of results, and the time, which is enough to show you your own recent searches and enforce daily limits. While you are signed in, your recent queries are shown in your own dashboard so you can pick up where you left off; those entries are removed when you sign out or delete your account.</p>
+      <p>We never return leaked passwords or password hashes to you or store them. A result tells you which kinds of data a leaked record held, not what the values were.</p>
       <h3>Cookies</h3>
       <p>We set one cookie, <span class="mono">vs_session</span>, which holds a random session identifier. It is HttpOnly and SameSite=Lax, which means scripts cannot read it and it is not sent on cross-site requests. It expires after 30 days of inactivity.</p>
       <h3>What we do not do</h3>
       <ul>
         <li>We do not sell or share your data with advertisers or data brokers.</li>
         <li>We do not build an advertising profile from your lookups.</li>
-        <li>We do not retain the contents of your queries beyond the request.</li>
+        <li>We do not keep the identifier you searched for.</li>
       </ul>
       <h3>Your rights</h3>
-      <p>You can request a copy of your data, correct it, or have your account and associated records deleted. Contact us and we will action it; because no query log exists, deletion is genuinely complete rather than best-effort.</p>
+      <p>You can request a copy of your data, correct it, or have your account and associated records deleted. Contact us and we will action it. We hold no query log, so there is nothing about your searches for us to keep in the first place; note that our provider holds its own record of what it was asked, which we cannot delete on your behalf.</p>
     </section>
 
     <section id="terms">
@@ -126,7 +128,7 @@
       <h3>Lawful basis</h3>
       <p>We process account data under performance of a contract, which is what lets you sign in. We process technical data strictly to keep the service secure and to meet legal obligations.</p>
       <h3>Your rights</h3>
-      <p>Access, rectification, erasure, restriction, portability and objection. Because we keep no query log, there is no processing history to disclose or delete.</p>
+      <p>Access, rectification, erasure, restriction, portability and objection. We keep no query log, so there is no processing history on our side to disclose or delete; our provider keeps its own record of the lookups it answered.</p>
       <h3>Retention</h3>
       <p>Account data is held for as long as your account exists. Sessions expire after 30 days of inactivity. Deletion requests are completed within 30 days.</p>
       <h3>Contact</h3>

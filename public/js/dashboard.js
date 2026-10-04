@@ -176,8 +176,13 @@
         render();
         remember(value);
         notice(
-          res.data.hits.length + " demo " + (res.data.hits.length === 1 ? "record" : "records") +
-          " across the source set. This build returns synthetic data.",
+          res.data.hits.length +
+            (res.data.hits.length === 1 ? " record" : " records") +
+            (res.data.total > res.data.hits.length
+              ? " of " + res.data.total + " total"
+              : "") +
+            ". " +
+            (res.data.attribution || ""),
           "info"
         );
         renderResults(res.data);
@@ -188,8 +193,11 @@
       });
   }
 
-  /* Recent searches live only in this browser. Nothing about what you looked up
-     is sent to or kept on the server, which is what the privacy page promises. */
+  /* Recent searches live only in this browser. The list is never sent to or
+     kept on the server -- what the server keeps is a one-way hash so a search
+     can be counted and rate limited, not the identifier itself. Note the
+     identifier does leave the server: the lookup is answered by our provider.
+     See the privacy policy. */
   function historyKey() {
     return "vs.history." + (state.user ? state.user.id : "anon");
   }
