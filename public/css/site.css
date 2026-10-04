@@ -590,7 +590,6 @@ footer{border-top:1px solid var(--line);background:var(--card);padding:52px 0 36
 .kv{display:grid;grid-template-columns:104px 1fr;gap:10px;padding:7px 10px;background:var(--paper);font-size:12.5px;line-height:1.45}
 .kv .k{color:var(--muted-2)}
 .kv .v{color:var(--ink);word-break:break-word}
-.kv .v.withheld{color:var(--muted);font-style:italic}
 [data-theme="dark"] .kvlist{background:var(--line)}
 [data-theme="dark"] .kv{background:var(--paper)}
 @media(max-width:600px){.kv{grid-template-columns:1fr;gap:2px}}

@@ -11,11 +11,11 @@
 //
 // Two deliberate choices:
 //
-//  1. Credentials in the response are never returned. DeHashed regularly hands
-//     back plaintext passwords from stealer logs. This app reports which fields
-//     a leaked record contained, never their values: that is what someone
-//     checking an exposure actually needs, and it keeps the site from becoming
-//     a credential dispenser.
+//  1. Credential columns are dropped from every record rather than displayed.
+//     DeHashed regularly hands back plaintext passwords from stealer logs.
+//     Everything else in the row is shown as the source returned it, because
+//     that is the exposure someone checking an account needs to see, and it
+//     keeps the site from becoming a credential dispenser.
 //  2. Every query costs a credit, so an identifier that cannot be matched to a
 //     searchable field is rejected before the request is made.
 
@@ -68,75 +68,93 @@ function extractEntries(body) {
   return [];
 }
 
-const FIELD_LABELS = [
-  ["password", "plaintext password"],
-  ["hashed_password", "password hash"],
-  ["email", "email"],
-  ["username", "username"],
-  ["ip_address", "IP address"],
-  ["name", "name"],
-  ["phone", "phone"],
-  ["address", "address"],
-  ["vin", "vehicle ID"],
-];
-
-// Non-credential fields are shown as the actual values from the leaked record.
-// That is what makes a result useful -- "this address was in a breach alongside
-// this username and IP" is the finding; a list of column names is not.
-const DETAIL_LABELS = [
+// Every non-credential field the source can return, with a display label.
+// Ordered identity-first: a reader opening a result wants to recognise the
+// person before they read the context, and DeHashed's records vary widely in
+// which columns a given dataset happened to contain.
+const DETAIL_FIELDS = [
   ["email", "Email"],
   ["username", "Username"],
   ["name", "Name"],
   ["phone", "Phone"],
   ["ip_address", "IP address"],
-  ["address", "Address"],
+  ["address", "Street address"],
+  ["city", "City"],
+  ["state", "State"],
+  ["zip", "Postcode"],
+  ["country", "Country"],
+  ["dob", "Date of birth"],
+  ["gender", "Gender"],
   ["domain", "Domain"],
+  ["url", "URL"],
+  ["company", "Employer"],
+  ["job_title", "Job title"],
+  ["device_type", "Device"],
+  ["os", "Operating system"],
+  ["browser", "Browser"],
+  ["user_agent", "User agent"],
   ["vin", "Vehicle ID"],
+  ["latitude", "Latitude"],
+  ["longitude", "Longitude"],
 ];
+
+// Values are rendered as the source returned them. This is the finding --
+// "this address was breached alongside this username, IP and employer" is what a
+// reader can act on, where a list of column names is not. Passwords and password
+// hashes are absent by design and are never read out of a record at all.
+const CREDENTIAL_KEYS = new Set(["password", "hashed_password", "password_hash", "hash"]);
 
 function detailsOf(entry) {
   const details = [];
-  for (const [key, label] of DETAIL_LABELS) {
-    const value = entry?.[key];
-    if (typeof value === "string" && value.length) details.push({ label, value });
+  for (const [key, label] of DETAIL_FIELDS) {
+    const raw = entry?.[key];
+    if (Array.isArray(raw)) {
+      // Datasets disagree on cardinality: some have one value per column, some
+      // have a list. Both are shown rather than dropping what is present.
+      const values = raw.filter((v) => typeof v === "string" && v.length);
+      if (values.length) details.push({ label, value: values.join(", ") });
+    } else if (typeof raw === "string" && raw.length) {
+      details.push({ label, value: raw });
+    }
+  }
+  // Anything the source returned that is not in the table above and is not a
+  // credential still belongs on the card; a missed column is data loss.
+  const known = new Set(DETAIL_FIELDS.map(([k]) => k));
+  for (const [key, value] of Object.entries(entry || {})) {
+    if (known.has(key) || CREDENTIAL_KEYS.has(key)) continue;
+    if (key === "database_name" || key === "source" || key === "id" || key === "date") continue;
+    if (key === "breach_date") continue;
+    if (typeof value === "string" && value.length) {
+      details.push({ label: humanise(key), value });
+    } else if (Array.isArray(value) && value.some((v) => typeof v === "string" && v.length)) {
+      details.push({ label: humanise(key), value: value.filter((v) => typeof v === "string" && v.length).join(", ") });
+    }
   }
   return details;
 }
 
-// Presence and shape only, never the value. A recovered plaintext password is a
-// working credential for someone else's account, and publishing one on a
-// searchable page is an account-takeover service no matter how the page frames
-// it. Its length and type are enough to tell a real exposure from a stale one.
-function credentialOf(entry) {
-  for (const [key, type] of [
-    ["password", "plaintext"],
-    ["hashed_password", "hash"],
-  ]) {
-    const value = entry?.[key];
-    if (typeof value === "string" && value.length) {
-      return { present: true, type, length: value.length };
-    }
-  }
-  return { present: false, type: null, length: 0 };
+function humanise(key) {
+  return String(key).replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
 }
 
 function presentFields(entry) {
-  return FIELD_LABELS.filter(([key]) => {
+  return DETAIL_FIELDS.filter(([key]) => {
     const value = entry?.[key];
     return typeof value === "string" ? value.length > 0 : value != null;
   }).map(([, label]) => label);
 }
 
-// A record carrying a credential is direct evidence of exposure; one with a few
-// identifiers and no credential is weaker, and saying otherwise would overstate
-// what the data shows.
-function confidenceOf(entry, fields) {
-  if (entry?.password || entry?.hashed_password) return "high";
-  if (fields.length >= 3) return "medium";
+// How much this record actually identifies someone. Credentials are not part of
+// the calculation: the panel reports what the data shows about a person, and a
+// row of identifiers is strong evidence on its own terms.
+function confidenceOf(details) {
+  if (details.length >= 4) return "high";
+  if (details.length >= 2) return "medium";
   return "low";
 }
 
 function toHit(entry, kind) {
+  const details = detailsOf(entry);
   const fields = presentFields(entry);
   return {
     source: entry?.database_name || entry?.source || "Unattributed source",
@@ -145,9 +163,8 @@ function toHit(entry, kind) {
     // so the date says what is actually known rather than inventing one.
     breached: entry?.date || entry?.breach_date || "Date not published",
     fields,
-    details: detailsOf(entry),
-    credential: credentialOf(entry),
-    confidence: confidenceOf(entry, fields),
+    details,
+    confidence: confidenceOf(details),
   };
 }
 
@@ -156,12 +173,7 @@ function toHit(entry, kind) {
 // the combination is what lets an attacker confirm a target or fill in a blank on
 // a form they already half-know. So the shared values are grouped across the
 // result set rather than left to be eyeballed one card at a time.
-//
-// The credential is counted here exactly like any other field -- it is only ever
-// a yes/no and a length. Grouping it does not reveal it, and hiding it would
-// make this panel lie: "exposed alongside 3 other accounts" is the actual risk,
-// and it is true whether or not the value is displayed.
-const SHARED_STRENGTH = { "IP address": "high", Username: "high", Phone: "high", "Physical address": "high", VIN: "high", Email: "medium", Name: "low", Domain: "low" };
+const SHARED_STRENGTH = { "IP address": "high", Username: "high", Phone: "high", "Street address": "high", VIN: "high", Email: "medium", "User agent": "high", Name: "low", "Date of birth": "low", Domain: "low" };
 
 function correlate(hits, query) {
   const groups = new Map();
@@ -192,19 +204,14 @@ function correlate(hits, query) {
     }))
     .sort((a, b) => b.sources.length - a.sources.length || a.label.localeCompare(b.label));
 
-  const credentialBreaches = hits.filter((h) => h.credential.present);
-  const reused = credentialBreaches.length > 1;
-
   return {
     nodes,
-    // The headline number: distinct accounts in the result set that were breached
-    // alongside a credential. One is a leak, several is a fill-in-the-blank list.
     exposure: {
       breaches: hits.length,
-      withCredential: credentialBreaches.length,
-      credentialType: credentialBreaches[0]?.credential?.type || null,
-      reused,
       sourceCount: new Set(hits.map((h) => h.source)).size,
+      // How much of the person each record actually exposes. A row with an
+      // address, employer and device says far more than a bare email.
+      fieldCount: hits.reduce((max, h) => Math.max(max, h.details.length), 0),
     },
   };
 }

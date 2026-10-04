@@ -246,21 +246,10 @@
       return;
     }
 
-    // Correlation panel: which values travel together across breaches. This is
-    // the part that answers "what is this connected to" -- the password value
-    // itself is never in the data, but its presence is, and that is the risk.
     var cor = data.correlation;
     var corHtml = "";
     if (cor && cor.exposure && cor.exposure.breaches > 0) {
       var ex = cor.exposure;
-      var credNote = ex.withCredential > 0
-        ? '<p class="muted" style="font-size:13px;margin:8px 0 0">' +
-          ex.withCredential + " of " + ex.breaches + " record" + (ex.breaches === 1 ? "" : "s") +
-          " carried a " + (ex.credentialType === "hash" ? "password hash" : "recovered password") +
-          (ex.reused ? ", reused across every one of them" : "") +
-          ". The value is withheld; the fact that it was exposed is not.</p>"
-        : '<p class="muted" style="font-size:13px;margin:8px 0 0">No credential in this result set.</p>';
-
       var nodes = (cor.nodes || [])
         .map(function (n) {
           return (
@@ -280,10 +269,10 @@
           '<h3 class="cor-h">What this is connected to</h3>' +
           '<p class="muted" style="font-size:13px;margin:0 0 10px">' +
             ex.breaches + " record" + (ex.breaches === 1 ? "" : "s") + " across " +
-            ex.sourceCount + " source" + (ex.sourceCount === 1 ? "" : "s") + "." +
+            ex.sourceCount + " source" + (ex.sourceCount === 1 ? "" : "s") + ", up to " +
+            ex.fieldCount + " field" + (ex.fieldCount === 1 ? "" : "s") + " deep." +
             (nodes ? " Values below appear in more than one breach, which is what links them to the same person." : "") +
           "</p>" +
-          credNote +
           (nodes ? '<div class="cor-list">' + nodes + "</div>" : "") +
         "</div>";
     }
@@ -302,16 +291,6 @@
         })
         .join("");
 
-      var cred = h.credential || {};
-      var credLine = cred.present
-        ? '<div class="kv"><span class="k">Password</span>' +
-          '<span class="v withheld">' +
-          (cred.type === "plaintext" ? "recovered, " : "hashed, ") +
-          esc(String(cred.length)) +
-          " chars &middot; not shown" +
-          "</span></div>"
-        : "";
-
       return (
         '<div class="result">' +
           '<div class="result-top">' +
@@ -319,7 +298,7 @@
             '<span class="conf ' + conf + '"><i></i>' + esc(h.confidence) + " confidence</span>" +
           "</div>" +
           '<div class="muted" style="font-size:13px">Breached ' + esc(h.breached) + " &middot; " + esc(h.kind) + " record</div>" +
-          '<div class="kvlist">' + rows + credLine + "</div>" +
+          '<div class="kvlist">' + rows + "</div>" +
         "</div>"
       );
     }).join("");
