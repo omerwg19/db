@@ -161,7 +161,10 @@ function securityHeaders() {
       "img-src 'self' data:",
       "style-src 'self' 'unsafe-inline'",
       "script-src 'self'",
-      "connect-src 'self'",
+      // The password checker is k-anonymous: only the first five characters of
+      // the SHA-1 hash reach this host and the password itself never leaves the
+      // browser. Nothing else is allowed to talk to anything off-site.
+      "connect-src 'self' https://api.pwnedpasswords.com",
     ].join("; "),
   };
   // Only meaningful once the site is actually served over TLS.
